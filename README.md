@@ -92,7 +92,7 @@ worklog/
 
 - [x] Authentication with NextAuth
 - [x] Landing page and navigation
-- [ ] Database setup with Prisma
+- [x] Database setup with Prisma
 - [ ] Client CRUD operations
 - [ ] Timer functionality
 - [ ] Dashboard with time summaries
