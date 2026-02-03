@@ -93,9 +93,9 @@ worklog/
 - [x] Authentication with NextAuth
 - [x] Landing page and navigation
 - [x] Database setup with Prisma
-- [ ] Client CRUD operations
-- [ ] Timer functionality
-- [ ] Dashboard with time summaries
+- [x] Client CRUD operations
+- [x] Timer functionality
+- [x] Dashboard with time summaries
 - [ ] Invoice generation and PDF export
 - [ ] Deployment to Vercel
 
