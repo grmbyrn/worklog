@@ -1,6 +1,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import type { TimeEntry, Client } from "@prisma/client";
 
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
@@ -35,7 +36,7 @@ export async function GET(req: Request) {
       { clientName: string; hours: number; earnings: number }
     > = {};
 
-    timeEntries.forEach((entry) => {
+    timeEntries.forEach((entry: TimeEntry & { client: Client }) => {
       const startTime = new Date(entry.startTime as Date);
       const endTime = new Date(entry.endTime as Date);
       const hours =
@@ -58,7 +59,7 @@ export async function GET(req: Request) {
     });
 
     // Get recent entries (last 10)
-    const recentEntries = timeEntries.slice(0, 10).map((entry) => {
+    const recentEntries = timeEntries.slice(0, 10).map((entry: TimeEntry & { client: Client }) => {
       const startTime = new Date(entry.startTime as Date);
       const endTime = new Date(entry.endTime as Date);
       const hours =
