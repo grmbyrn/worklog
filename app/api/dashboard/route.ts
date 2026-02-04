@@ -23,7 +23,7 @@ export async function GET(req: Request) {
     }
 
     // Get all time entries with client info
-    const timeEntries = await prisma.timeEntry.findMany({
+    const timeEntries: (TimeEntry & { client: Client })[] = await prisma.timeEntry.findMany({
       where: { userId: user.id },
       include: { client: true },
       orderBy: { startTime: "desc" },
