@@ -51,6 +51,8 @@ model Invoice {
   id          String    @id @default(cuid())
   totalHours  Float
   totalAmount Float
+  periodStart DateTime?
+  periodEnd   DateTime?
   createdAt   DateTime  @default(now())
   
   clientId    String
