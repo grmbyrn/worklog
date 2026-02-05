@@ -2,7 +2,7 @@
 
 A time-tracking and invoicing application built for freelancers to manage billable hours across multiple clients.
 
-**🔗 Live Demo:** [Coming soon - Vercel deployment in progress]
+**🔗 [Live Demo on Vercel](https://worklog-ec8rmlj0n-grmbyrns-projects.vercel.app/)**
 
 ## Overview
 
@@ -112,7 +112,7 @@ All routes are protected with session-based authentication via middleware.
 - [x] Timer functionality
 - [x] Dashboard with time summaries
 - [x] Invoice generation and PDF export
-- [ ] Deployment to Vercel
+- [x] Deployment to Vercel
 
 ## Why This Project?
 
