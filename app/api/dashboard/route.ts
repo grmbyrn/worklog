@@ -29,6 +29,9 @@ export async function GET() {
       orderBy: { startTime: "desc" },
     });
 
+    // Ignore in-progress entries (endTime is null)
+    const completedEntries = timeEntries.filter((entry) => entry.endTime);
+
     // Calculate total earnings
     let totalEarnings = 0;
     const earningsByClient: Record<
@@ -36,7 +39,7 @@ export async function GET() {
       { clientName: string; hours: number; earnings: number }
     > = {};
 
-    timeEntries.forEach((entry: TimeEntry & { client: Client }) => {
+    completedEntries.forEach((entry: TimeEntry & { client: Client }) => {
       const startTime = new Date(entry.startTime as Date);
       const endTime = new Date(entry.endTime as Date);
       const hours =
@@ -59,7 +62,7 @@ export async function GET() {
     });
 
     // Get recent entries (last 10)
-    const recentEntries = timeEntries.slice(0, 10).map((entry: TimeEntry & { client: Client }) => {
+    const recentEntries = completedEntries.slice(0, 10).map((entry: TimeEntry & { client: Client }) => {
       const startTime = new Date(entry.startTime as Date);
       const endTime = new Date(entry.endTime as Date);
       const hours =
@@ -81,7 +84,7 @@ export async function GET() {
     const oneWeekAgo = new Date();
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
-    const weeklyEarnings = timeEntries
+    const weeklyEarnings = completedEntries
       .filter((entry) => new Date(entry.startTime as Date) > oneWeekAgo)
       .reduce((sum, entry) => {
         const startTime = new Date(entry.startTime as Date);
@@ -96,7 +99,7 @@ export async function GET() {
     const oneMonthAgo = new Date();
     oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
 
-    const monthlyEarnings = timeEntries
+    const monthlyEarnings = completedEntries
       .filter((entry) => new Date(entry.startTime as Date) > oneMonthAgo)
       .reduce((sum, entry) => {
         const startTime = new Date(entry.startTime as Date);
