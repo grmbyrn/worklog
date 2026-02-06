@@ -3,7 +3,7 @@ import { authOptions } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import type { TimeEntry, Client } from "@prisma/client";
 
-export async function GET(req: Request) {
+export async function GET() {
   const session = await getServerSession(authOptions);
 
   if (!session || !session.user?.email) {
@@ -111,7 +111,7 @@ export async function GET(req: Request) {
       totalEarnings: parseFloat(totalEarnings.toFixed(2)),
       weeklyEarnings: parseFloat(weeklyEarnings.toFixed(2)),
       monthlyEarnings: parseFloat(monthlyEarnings.toFixed(2)),
-      byClient: Object.entries(earningsByClient).map(([_, data]) => ({
+      byClient: Object.entries(earningsByClient).map(([, data]) => ({
         ...data,
         earnings: parseFloat(data.earnings.toFixed(2)),
         hours: parseFloat(data.hours.toFixed(2)),
