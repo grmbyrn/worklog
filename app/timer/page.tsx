@@ -14,6 +14,7 @@ export default function TimerPage() {
   const [isRunning, setIsRunning] = useState(false);
   const [seconds, setSeconds] = useState(0);
   const [startTime, setStartTime] = useState<Date | null>(null);
+  const [activeEntryId, setActiveEntryId] = useState<string | null>(null);
 
   useEffect(() => {
     // Fetch clients on mount
@@ -24,6 +25,28 @@ export default function TimerPage() {
     };
 
     fetchClients();
+  }, []);
+
+  useEffect(() => {
+    // Check for in-progress timers on mount
+    const checkInProgressTimer = async () => {
+      const res = await fetch("/api/timer");
+      const data = await res.json();
+
+      if(data.inProgressEntries && data.inProgressEntries.length > 0) {
+        const entry = data.inProgressEntries[0];
+        setActiveEntryId(entry.id);
+        setSelectedClientId(entry.clientId);
+        setStartTime(new Date(entry.startTime));
+        setIsRunning(true);
+
+        // Calculate elapsed seconds
+        const elapsed = Math.floor((Date.now() - new Date(entry.startTime).getTime()) / 1000);
+        setSeconds(elapsed);
+      }
+    }
+
+    checkInProgressTimer();
   }, []);
 
   useEffect(() => {
@@ -38,28 +61,45 @@ export default function TimerPage() {
     return () => clearInterval(interval);
   }, [isRunning]);
 
-  const handleStart = () => {
+  const handleStart = async () => {
     if (!selectedClientId) {
       alert("Please select a client");
       return;
     }
+    
+    const now = new Date();
+    setStartTime(now);
     setIsRunning(true);
-    setStartTime(new Date());
+
+    // Create a TimeEntry in the database (without endTime)
+    const response = await fetch("/api/timer", {
+      method: "POST",
+      headers: {"Content-Type": "application/json" },
+      body: JSON.stringify({
+        clientId: selectedClientId,
+        startTime: now.toISOString(),
+      })
+    })
+
+    if(response.ok){
+      const data = await response.json();
+      setActiveEntryId(data.timeEntry.id);
+    } else {
+      alert("Error starting timer");
+    }
   };
 
   const handleStop = async () => {
-    if (!startTime) return;
+    if (!startTime || !activeEntryId) return;
 
     setIsRunning(false);
 
     // Save to database
     const endTime = new Date();
-    const response = await fetch("/api/timer", {
-      method: "POST",
+    const response = await fetch(`/api/timer/${activeEntryId}`, {
+      method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        clientId: selectedClientId,
-        startTime: startTime.toISOString(),
         endTime: endTime.toISOString(),
       }),
     });
@@ -68,6 +108,7 @@ export default function TimerPage() {
       // Reset timer
       setSeconds(0);
       setStartTime(null);
+      setActiveEntryId(null);
       alert("Time entry saved!");
     } else {
       alert("Error saving time entry");
