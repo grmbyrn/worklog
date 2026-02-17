@@ -37,12 +37,14 @@ Worklog helps freelancers track their time, manage client information, and gener
 ### Installation
 
 1. Clone the repository:
+
 ```bash
 git clone https://github.com/grmbyrn/worklog.git
 cd worklog
 ```
 
 2. Install dependencies:
+
 ```bash
 npm install
 ```
@@ -50,6 +52,7 @@ npm install
 3. Set up environment variables:
 
 Create a `.env.local` file in the root directory:
+
 ```env
 DATABASE_URL=your-postgresql-connection-string
 AUTH_SECRET=your-auth-secret
@@ -58,17 +61,20 @@ AUTH_GITHUB_SECRET=your-github-oauth-client-secret
 ```
 
 To generate `AUTH_SECRET`:
+
 ```bash
 npx auth secret
 ```
 
 To get GitHub OAuth credentials:
+
 - Go to GitHub Settings → Developer Settings → OAuth Apps
 - Create a new OAuth App
 - Set Homepage URL to `http://localhost:3000`
 - Set Authorization callback URL to `http://localhost:3000/api/auth/callback/github`
 
 4. Run the development server:
+
 ```bash
 npm run dev
 ```
@@ -117,6 +123,7 @@ All routes are protected with session-based authentication via middleware.
 ## Why This Project?
 
 This project demonstrates:
+
 - Modern Next.js patterns (App Router, Server Components)
 - OAuth authentication flow
 - Protected routes with middleware
@@ -129,26 +136,31 @@ Built as a portfolio piece to showcase production-ready code and best practices.
 ## Key Learnings
 
 **Authentication & Security:**
+
 - Implemented OAuth flow with GitHub and NextAuth
 - Protected routes using Next.js middleware
 - Session management with server-side validation
 
 **Database & Backend:**
+
 - Designed relational schema with proper foreign keys and cascade deletes
 - Used Prisma ORM with PostgreSQL adapter pattern (v7)
 - Handled user upsert pattern (session exists before User record)
 
 **Full-Stack Patterns:**
+
 - RESTful API design with proper HTTP methods
 - Server components vs client components in Next.js App Router
 - Type-safe development with TypeScript and Prisma
 
 **UI/UX:**
+
 - Responsive design with Tailwind CSS v4
 - Mobile-first navigation with hamburger menu
 - Client-side PDF generation with jsPDF
 
 **Challenges Solved:**
+
 - Next.js 16 async params breaking Prisma queries (awaited params)
 - Prisma Client regeneration after schema changes
 - Temporal dead zone errors in React hooks

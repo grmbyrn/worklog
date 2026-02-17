@@ -1,15 +1,15 @@
-import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
 
 export async function GET() {
   try {
     // Try to query the database
     const userCount = await prisma.user.count();
     const clientCount = await prisma.client.count();
-    
+
     return NextResponse.json({
       success: true,
-      message: "Database connection successful!",
+      message: 'Database connection successful!',
       data: {
         users: userCount,
         clients: clientCount,
@@ -19,10 +19,10 @@ export async function GET() {
     return NextResponse.json(
       {
         success: false,
-        message: "Database connection failed",
-        error: error instanceof Error ? error.message : "Unknown error",
+        message: 'Database connection failed',
+        error: error instanceof Error ? error.message : 'Unknown error',
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -1,15 +1,12 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/auth";
-import { prisma } from "@/lib/prisma";
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/auth';
+import { prisma } from '@/lib/prisma';
 
-export async function GET(
-  _req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await getServerSession(authOptions);
 
   if (!session || !session.user?.email) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
+    return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   const { id } = await params;
@@ -19,7 +16,7 @@ export async function GET(
   });
 
   if (!user) {
-    return Response.json({ error: "User not found" }, { status: 404 });
+    return Response.json({ error: 'User not found' }, { status: 404 });
   }
 
   const invoice = await prisma.invoice.findFirst({
@@ -28,7 +25,7 @@ export async function GET(
   });
 
   if (!invoice) {
-    return Response.json({ error: "Invoice not found" }, { status: 404 });
+    return Response.json({ error: 'Invoice not found' }, { status: 404 });
   }
 
   const periodStart = invoice.periodStart;
@@ -46,7 +43,7 @@ export async function GET(
       endTime: { lte: periodEnd },
       NOT: { endTime: null },
     },
-    orderBy: { startTime: "asc" },
+    orderBy: { startTime: 'asc' },
   });
 
   const entries = timeEntries.map((entry) => {
