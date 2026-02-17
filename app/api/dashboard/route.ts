@@ -9,7 +9,7 @@ export async function GET() {
   const session = await getServerSession(authOptions);
 
   if (!session || !session.user?.email) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
+    return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
@@ -19,16 +19,14 @@ export async function GET() {
     });
 
     if (!user) {
-      return Response.json(
-        { totalEarnings: 0, byClient: [], recentEntries: [] }
-      );
+      return Response.json({ totalEarnings: 0, byClient: [], recentEntries: [] });
     }
 
     // Get all time entries with client info
     const timeEntries: (TimeEntry & { client: Client })[] = await prisma.timeEntry.findMany({
       where: { userId: user.id },
       include: { client: true },
-      orderBy: { startTime: "desc" },
+      orderBy: { startTime: 'desc' },
     });
 
     // Ignore in-progress entries (endTime is null)
@@ -44,9 +42,7 @@ export async function GET() {
     completedEntries.forEach((entry: TimeEntry & { client: Client }) => {
       const startTime = new Date(entry.startTime as Date);
       const endTime = new Date(entry.endTime as Date);
-      const hours =
-        (endTime.getTime() - startTime.getTime()) /
-        (1000 * 60 * 60);
+      const hours = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
       const earnings = hours * entry.client.hourlyRate;
 
       totalEarnings += earnings;
@@ -64,23 +60,23 @@ export async function GET() {
     });
 
     // Get recent entries (last 10)
-    const recentEntries = completedEntries.slice(0, 10).map((entry: TimeEntry & { client: Client }) => {
-      const startTime = new Date(entry.startTime as Date);
-      const endTime = new Date(entry.endTime as Date);
-      const hours =
-        (endTime.getTime() - startTime.getTime()) /
-        (1000 * 60 * 60);
-      const earnings = hours * entry.client.hourlyRate;
+    const recentEntries = completedEntries
+      .slice(0, 10)
+      .map((entry: TimeEntry & { client: Client }) => {
+        const startTime = new Date(entry.startTime as Date);
+        const endTime = new Date(entry.endTime as Date);
+        const hours = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
+        const earnings = hours * entry.client.hourlyRate;
 
-      return {
-        id: entry.id,
-        clientName: entry.client.name,
-        startTime: entry.startTime,
-        endTime: entry.endTime,
-        hours: parseFloat(hours.toFixed(2)),
-        earnings: parseFloat(earnings.toFixed(2)),
-      };
-    });
+        return {
+          id: entry.id,
+          clientName: entry.client.name,
+          startTime: entry.startTime,
+          endTime: entry.endTime,
+          hours: parseFloat(hours.toFixed(2)),
+          earnings: parseFloat(earnings.toFixed(2)),
+        };
+      });
 
     // Calculate weekly earnings
     const oneWeekAgo = new Date();
@@ -91,9 +87,7 @@ export async function GET() {
       .reduce((sum, entry) => {
         const startTime = new Date(entry.startTime as Date);
         const endTime = new Date(entry.endTime as Date);
-        const hours =
-          (endTime.getTime() - startTime.getTime()) /
-          (1000 * 60 * 60);
+        const hours = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
         return sum + hours * entry.client.hourlyRate;
       }, 0);
 
@@ -106,9 +100,7 @@ export async function GET() {
       .reduce((sum, entry) => {
         const startTime = new Date(entry.startTime as Date);
         const endTime = new Date(entry.endTime as Date);
-        const hours =
-          (endTime.getTime() - startTime.getTime()) /
-          (1000 * 60 * 60);
+        const hours = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
         return sum + hours * entry.client.hourlyRate;
       }, 0);
 
@@ -124,10 +116,7 @@ export async function GET() {
       recentEntries,
     });
   } catch (error) {
-    console.error("Error fetching dashboard data:", error);
-    return Response.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    console.error('Error fetching dashboard data:', error);
+    return Response.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

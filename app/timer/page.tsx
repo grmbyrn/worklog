@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
 interface Client {
   id: string;
@@ -10,7 +10,7 @@ interface Client {
 
 export default function TimerPage() {
   const [clients, setClients] = useState<Client[]>([]);
-  const [selectedClientId, setSelectedClientId] = useState("");
+  const [selectedClientId, setSelectedClientId] = useState('');
   const [isRunning, setIsRunning] = useState(false);
   const [seconds, setSeconds] = useState(0);
   const [startTime, setStartTime] = useState<Date | null>(null);
@@ -19,7 +19,7 @@ export default function TimerPage() {
   useEffect(() => {
     // Fetch clients on mount
     const fetchClients = async () => {
-      const res = await fetch("/api/clients");
+      const res = await fetch('/api/clients');
       const data = await res.json();
       setClients(data.clients || []);
     };
@@ -30,10 +30,10 @@ export default function TimerPage() {
   useEffect(() => {
     // Check for in-progress timers on mount
     const checkInProgressTimer = async () => {
-      const res = await fetch("/api/timer");
+      const res = await fetch('/api/timer');
       const data = await res.json();
 
-      if(data.inProgressEntries && data.inProgressEntries.length > 0) {
+      if (data.inProgressEntries && data.inProgressEntries.length > 0) {
         const entry = data.inProgressEntries[0];
         setActiveEntryId(entry.id);
         setSelectedClientId(entry.clientId);
@@ -44,7 +44,7 @@ export default function TimerPage() {
         const elapsed = Math.floor((Date.now() - new Date(entry.startTime).getTime()) / 1000);
         setSeconds(elapsed);
       }
-    }
+    };
 
     checkInProgressTimer();
   }, []);
@@ -63,29 +63,29 @@ export default function TimerPage() {
 
   const handleStart = async () => {
     if (!selectedClientId) {
-      alert("Please select a client");
+      alert('Please select a client');
       return;
     }
-    
+
     const now = new Date();
     setStartTime(now);
     setIsRunning(true);
 
     // Create a TimeEntry in the database (without endTime)
-    const response = await fetch("/api/timer", {
-      method: "POST",
-      headers: {"Content-Type": "application/json" },
+    const response = await fetch('/api/timer', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         clientId: selectedClientId,
         startTime: now.toISOString(),
-      })
-    })
+      }),
+    });
 
-    if(response.ok){
+    if (response.ok) {
       const data = await response.json();
       setActiveEntryId(data.timeEntry.id);
     } else {
-      alert("Error starting timer");
+      alert('Error starting timer');
     }
   };
 
@@ -97,8 +97,8 @@ export default function TimerPage() {
     // Save to database
     const endTime = new Date();
     const response = await fetch(`/api/timer/${activeEntryId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         endTime: endTime.toISOString(),
       }),
@@ -109,9 +109,9 @@ export default function TimerPage() {
       setSeconds(0);
       setStartTime(null);
       setActiveEntryId(null);
-      alert("Time entry saved!");
+      alert('Time entry saved!');
     } else {
-      alert("Error saving time entry");
+      alert('Error saving time entry');
     }
   };
 
@@ -125,13 +125,11 @@ export default function TimerPage() {
     const hours = Math.floor(totalSeconds / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
     const secs = totalSeconds % 60;
-    return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
   };
 
   const selectedClient = clients.find((c) => c.id === selectedClientId);
-  const currentEarnings = selectedClient
-    ? (seconds / 3600) * selectedClient.hourlyRate
-    : 0;
+  const currentEarnings = selectedClient ? (seconds / 3600) * selectedClient.hourlyRate : 0;
 
   return (
     <div className="container mx-auto px-6 py-12 max-w-2xl">
@@ -140,9 +138,7 @@ export default function TimerPage() {
       <div className="bg-white rounded-lg shadow-md p-8">
         {/* Client Selector */}
         <div className="mb-8">
-          <label className="block text-sm font-semibold text-slate-900 mb-3">
-            Select Client
-          </label>
+          <label className="block text-sm font-semibold text-slate-900 mb-3">Select Client</label>
           <select
             value={selectedClientId}
             onChange={(e) => setSelectedClientId(e.target.value)}
@@ -160,13 +156,9 @@ export default function TimerPage() {
 
         {/* Timer Display */}
         <div className="bg-slate-900 text-white rounded-lg p-12 text-center mb-8">
-          <div className="text-6xl font-mono font-bold mb-4">
-            {formatTime(seconds)}
-          </div>
+          <div className="text-6xl font-mono font-bold mb-4">{formatTime(seconds)}</div>
           {selectedClient && (
-            <div className="text-2xl text-slate-300">
-              ${currentEarnings.toFixed(2)}
-            </div>
+            <div className="text-2xl text-slate-300">${currentEarnings.toFixed(2)}</div>
           )}
         </div>
 

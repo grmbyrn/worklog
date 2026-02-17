@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { useSession, signOut } from "next-auth/react";
-import { useState } from "react";
+import Link from 'next/link';
+import { useSession, signOut } from 'next-auth/react';
+import { useState } from 'react';
 
 export default function Nav() {
   const { data: session } = useSession();
@@ -14,10 +14,7 @@ export default function Nav() {
       <div className="text-lg font-bold">Worklog</div>
 
       {/* Hamburger Button (Mobile) */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="md:hidden flex flex-col gap-1.5"
-      >
+      <button onClick={() => setIsOpen(!isOpen)} className="md:hidden flex flex-col gap-1.5">
         <span className="w-6 h-0.5 bg-white"></span>
         <span className="w-6 h-0.5 bg-white"></span>
         <span className="w-6 h-0.5 bg-white"></span>
@@ -51,12 +48,10 @@ export default function Nav() {
 
       {/* Desktop User Menu */}
       <div className="hidden md:flex items-center gap-4 ml-auto">
-        {session?.user?.email && (
-          <span className="text-slate-300">{session.user.email}</span>
-        )}
+        {session?.user?.email && <span className="text-slate-300">{session.user.email}</span>}
         {session ? (
           <button
-            onClick={() => signOut({ callbackUrl: "/" })}
+            onClick={() => signOut({ callbackUrl: '/' })}
             className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
           >
             Sign Out
@@ -87,11 +82,7 @@ export default function Nav() {
               >
                 Clients
               </Link>
-              <Link
-                href="/timer"
-                className="hover:text-slate-300"
-                onClick={() => setIsOpen(false)}
-              >
+              <Link href="/timer" className="hover:text-slate-300" onClick={() => setIsOpen(false)}>
                 Timer
               </Link>
               <Link
@@ -103,14 +94,12 @@ export default function Nav() {
               </Link>
               <hr className="border-slate-600" />
               {session?.user?.email && (
-                <span className="text-slate-300 text-sm">
-                  {session.user.email}
-                </span>
+                <span className="text-slate-300 text-sm">{session.user.email}</span>
               )}
               <button
                 onClick={() => {
                   setIsOpen(false);
-                  signOut({ callbackUrl: "/" });
+                  signOut({ callbackUrl: '/' });
                 }}
                 className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition-colors w-full"
               >
@@ -119,11 +108,7 @@ export default function Nav() {
             </>
           ) : (
             <>
-              <Link
-                href="/"
-                className="hover:text-slate-300"
-                onClick={() => setIsOpen(false)}
-              >
+              <Link href="/" className="hover:text-slate-300" onClick={() => setIsOpen(false)}>
                 Home
               </Link>
               <Link

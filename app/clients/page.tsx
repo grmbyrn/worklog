@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
 interface Client {
   id: string;
@@ -15,14 +15,14 @@ export default function ClientsPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    hourlyRate: "",
+    name: '',
+    email: '',
+    hourlyRate: '',
   });
 
   useEffect(() => {
     const fetchClients = async () => {
-      const res = await fetch("/api/clients");
+      const res = await fetch('/api/clients');
       const data = await res.json();
       setClients(data.clients || []);
     };
@@ -31,7 +31,7 @@ export default function ClientsPage() {
   }, []);
 
   const refetchClients = async () => {
-    const res = await fetch("/api/clients");
+    const res = await fetch('/api/clients');
     const data = await res.json();
     setClients(data.clients || []);
   };
@@ -42,20 +42,20 @@ export default function ClientsPage() {
     if (editingClient) {
       // Update
       await fetch(`/api/clients/${editingClient.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
     } else {
       // Create
-      await fetch("/api/clients", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      await fetch('/api/clients', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
     }
 
-    setFormData({ name: "", email: "", hourlyRate: "" });
+    setFormData({ name: '', email: '', hourlyRate: '' });
     setIsFormOpen(false);
     setEditingClient(null);
     refetchClients();
@@ -72,8 +72,8 @@ export default function ClientsPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm("Delete this client?")) {
-      await fetch(`/api/clients/${id}`, { method: "DELETE" });
+    if (confirm('Delete this client?')) {
+      await fetch(`/api/clients/${id}`, { method: 'DELETE' });
       refetchClients();
     }
   };
@@ -86,7 +86,7 @@ export default function ClientsPage() {
           onClick={() => {
             setIsFormOpen(true);
             setEditingClient(null);
-            setFormData({ name: "", email: "", hourlyRate: "" });
+            setFormData({ name: '', email: '', hourlyRate: '' });
           }}
           className="px-6 py-3 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors"
         >
@@ -99,18 +99,12 @@ export default function ClientsPage() {
         <table className="w-full">
           <thead className="bg-slate-100">
             <tr>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">
-                Name
-              </th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">
-                Email
-              </th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">Name</th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">Email</th>
               <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">
                 Hourly Rate
               </th>
-              <th className="px-6 py-4 text-right text-sm font-semibold text-slate-900">
-                Actions
-              </th>
+              <th className="px-6 py-4 text-right text-sm font-semibold text-slate-900">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200">
@@ -118,9 +112,7 @@ export default function ClientsPage() {
               <tr key={client.id} className="hover:bg-slate-50">
                 <td className="px-6 py-4 text-slate-900">{client.name}</td>
                 <td className="px-6 py-4 text-slate-600">{client.email}</td>
-                <td className="px-6 py-4 text-slate-900">
-                  ${client.hourlyRate}/hr
-                </td>
+                <td className="px-6 py-4 text-slate-900">${client.hourlyRate}/hr</td>
                 <td className="px-6 py-4 text-right space-x-2">
                   <button
                     onClick={() => handleEdit(client)}
@@ -151,33 +143,25 @@ export default function ClientsPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-lg p-8 max-w-md w-full">
             <h2 className="text-2xl font-bold mb-6 text-slate-900">
-              {editingClient ? "Edit Client" : "Add Client"}
+              {editingClient ? 'Edit Client' : 'Add Client'}
             </h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-slate-900 mb-2">
-                  Name
-                </label>
+                <label className="block text-sm font-semibold text-slate-900 mb-2">Name</label>
                 <input
                   type="text"
                   value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-slate-900 mb-2">
-                  Email
-                </label>
+                <label className="block text-sm font-semibold text-slate-900 mb-2">Email</label>
                 <input
                   type="email"
                   value={formData.email}
-                  onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900"
                   required
                 />
@@ -189,9 +173,7 @@ export default function ClientsPage() {
                 <input
                   type="number"
                   value={formData.hourlyRate}
-                  onChange={(e) =>
-                    setFormData({ ...formData, hourlyRate: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, hourlyRate: e.target.value })}
                   className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900"
                   required
                   min="0"
@@ -203,7 +185,7 @@ export default function ClientsPage() {
                   type="submit"
                   className="flex-1 px-6 py-3 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors"
                 >
-                  {editingClient ? "Update" : "Create"}
+                  {editingClient ? 'Update' : 'Create'}
                 </button>
                 <button
                   type="button"
