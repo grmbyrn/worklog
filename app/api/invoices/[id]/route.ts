@@ -1,8 +1,13 @@
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/auth';
-import { prisma } from '@/lib/prisma';
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/auth";
+import { prisma } from "@/lib/prisma";
+import { validateEnv } from "@/lib/env";
 
-export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+validateEnv();
+export async function GET(
+  _req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   const session = await getServerSession(authOptions);
 
   if (!session || !session.user?.email) {
