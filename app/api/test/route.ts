@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { validateEnv } from "@/lib/env";
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import { validateEnv } from '@/lib/env';
 
 validateEnv();
 export async function GET() {

@@ -1,42 +1,42 @@
-import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/auth";
-import { validateEnv } from "@/lib/env";
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/auth';
+import { validateEnv } from '@/lib/env';
 
 validateEnv();
-export async function GET(){
-    const session = await getServerSession(authOptions);
-    if(!session){
-        return NextResponse.json({error: "Unauthorized"}, {status: 401});
-    }
+export async function GET() {
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
 
-    const userEmail = session.user?.email;
+  const userEmail = session.user?.email;
 
-    if(!userEmail){
-        return NextResponse.json({error: "Unauthorized"}, {status: 401});
-    }
+  if (!userEmail) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
 
-    const user = await prisma.user.upsert({
-        where: { email: userEmail },
-        update: {},
-        create: {
-            email: userEmail,
-            name: session.user?.name ?? null,
-        },
-    });
+  const user = await prisma.user.upsert({
+    where: { email: userEmail },
+    update: {},
+    create: {
+      email: userEmail,
+      name: session.user?.name ?? null,
+    },
+  });
 
-    if(!user){
-        return NextResponse.json({error: "Unauthorized"}, {status: 401});
-    }
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
 
-    const clients = await prisma.client.findMany({
-        where: {
-            userId: user.id
-        }
-    });
+  const clients = await prisma.client.findMany({
+    where: {
+      userId: user.id,
+    },
+  });
 
-    return NextResponse.json({clients});
+  return NextResponse.json({ clients });
 }
 
 export async function POST(request: Request) {

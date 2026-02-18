@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 
 interface Client {
   id: string;
@@ -9,45 +10,26 @@ interface Client {
 }
 
 export default function TimerPage() {
-  const [clients, setClients] = useState<Client[]>([]);
   const [selectedClientId, setSelectedClientId] = useState('');
   const [isRunning, setIsRunning] = useState(false);
   const [seconds, setSeconds] = useState(0);
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [activeEntryId, setActiveEntryId] = useState<string | null>(null);
 
-  useEffect(() => {
-    // Fetch clients on mount
-    const fetchClients = async () => {
+  const {
+    data: clientsData,
+    error: clientsError,
+    isLoading: clientsLoading,
+  } = useQuery({
+    queryKey: ['clients'],
+    queryFn: async () => {
       const res = await fetch('/api/clients');
-      const data = await res.json();
-      setClients(data.clients || []);
-    };
-
-    fetchClients();
-  }, []);
-
-  useEffect(() => {
-    // Check for in-progress timers on mount
-    const checkInProgressTimer = async () => {
-      const res = await fetch('/api/timer');
-      const data = await res.json();
-
-      if (data.inProgressEntries && data.inProgressEntries.length > 0) {
-        const entry = data.inProgressEntries[0];
-        setActiveEntryId(entry.id);
-        setSelectedClientId(entry.clientId);
-        setStartTime(new Date(entry.startTime));
-        setIsRunning(true);
-
-        // Calculate elapsed seconds
-        const elapsed = Math.floor((Date.now() - new Date(entry.startTime).getTime()) / 1000);
-        setSeconds(elapsed);
+      if (!res.ok) {
+        throw new Error('Failed to fetch clients');
       }
-    };
-
-    checkInProgressTimer();
-  }, []);
+      return res.json();
+    },
+  });
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -128,8 +110,24 @@ export default function TimerPage() {
     return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
   };
 
-  const selectedClient = clients.find((c) => c.id === selectedClientId);
+  const selectedClient = clientsData?.find((c: Client) => c.id === selectedClientId);
   const currentEarnings = selectedClient ? (seconds / 3600) * selectedClient.hourlyRate : 0;
+
+  if (clientsLoading) {
+    return (
+      <div className="container mx-auto px-6 py-12">
+        <div className="text-center text-slate-600">Loading...</div>
+      </div>
+    );
+  }
+
+  if (clientsError) {
+    return (
+      <div className="container mx-auto px-6 py-12">
+        <div className="text-center text-slate-600">Error: {clientsError?.message}</div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-6 py-12 max-w-2xl">
@@ -146,7 +144,7 @@ export default function TimerPage() {
             className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 disabled:bg-slate-100"
           >
             <option value="">Choose a client...</option>
-            {clients.map((client) => (
+            {clientsData?.map((client: Client) => (
               <option key={client.id} value={client.id}>
                 {client.name} (${client.hourlyRate}/hr)
               </option>
