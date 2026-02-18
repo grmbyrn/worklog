@@ -1,14 +1,11 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/auth";
-import { prisma } from "@/lib/prisma";
-import { validateEnv } from "@/lib/env";
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/auth';
+import { prisma } from '@/lib/prisma';
+import { validateEnv } from '@/lib/env';
 
 validateEnv();
-export async function PUT(
-    req: Request,
-    {params}: {params: Promise<{id: string}>}
-) {
-    const session = await getServerSession(authOptions);
+export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const session = await getServerSession(authOptions);
 
   if (!session || !session.user?.email) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });

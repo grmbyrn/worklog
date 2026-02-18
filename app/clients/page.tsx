@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 interface Client {
   id: string;
@@ -11,7 +12,6 @@ interface Client {
 }
 
 export default function ClientsPage() {
-  const [clients, setClients] = useState<Client[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [formData, setFormData] = useState({
@@ -19,22 +19,18 @@ export default function ClientsPage() {
     email: '',
     hourlyRate: '',
   });
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    const fetchClients = async () => {
+  const { data, error, isLoading } = useQuery({
+    queryKey: ['clients'],
+    queryFn: async () => {
       const res = await fetch('/api/clients');
-      const data = await res.json();
-      setClients(data.clients || []);
-    };
-
-    fetchClients();
-  }, []);
-
-  const refetchClients = async () => {
-    const res = await fetch('/api/clients');
-    const data = await res.json();
-    setClients(data.clients || []);
-  };
+      if (!res.ok) {
+        throw new Error('Failed to fetch clients');
+      }
+      return res.json();
+    },
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,7 +54,7 @@ export default function ClientsPage() {
     setFormData({ name: '', email: '', hourlyRate: '' });
     setIsFormOpen(false);
     setEditingClient(null);
-    refetchClients();
+    queryClient.invalidateQueries({ queryKey: ['clients'] });
   };
 
   const handleEdit = (client: Client) => {
@@ -74,9 +70,18 @@ export default function ClientsPage() {
   const handleDelete = async (id: string) => {
     if (confirm('Delete this client?')) {
       await fetch(`/api/clients/${id}`, { method: 'DELETE' });
-      refetchClients();
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-6 py-12">
+        <div className="text-center text-slate-600">Loading...</div>
+      </div>
+    );
+  }
+  if (error) return <div>Error: {error.message}</div>;
 
   return (
     <div className="container mx-auto px-6 py-12 max-w-6xl">
@@ -108,7 +113,7 @@ export default function ClientsPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200">
-            {clients.map((client) => (
+            {data?.clients.map((client: Client) => (
               <tr key={client.id} className="hover:bg-slate-50">
                 <td className="px-6 py-4 text-slate-900">{client.name}</td>
                 <td className="px-6 py-4 text-slate-600">{client.email}</td>
@@ -131,7 +136,7 @@ export default function ClientsPage() {
             ))}
           </tbody>
         </table>
-        {clients.length === 0 && (
+        {data?.clients.length === 0 && (
           <div className="text-center py-12 text-slate-600">
             No clients yet. Add your first client to get started.
           </div>

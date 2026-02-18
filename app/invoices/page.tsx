@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { jsPDF } from 'jspdf';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 interface Client {
   id: string;
@@ -76,38 +77,42 @@ const buildInvoicePdf = (invoice: Invoice, entries: InvoiceEntry[]) => {
 };
 
 export default function InvoicesPage() {
-  const [clients, setClients] = useState<Client[]>([]);
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     clientId: '',
     startDate: '',
     endDate: '',
   });
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const [clientsRes, invoicesRes] = await Promise.all([
-        fetch('/api/clients'),
-        fetch('/api/invoices'),
-      ]);
+  const {
+    data: clientsData,
+    error: clientsError,
+    isLoading: clientsLoading,
+  } = useQuery({
+    queryKey: ['clients'],
+    queryFn: async () => {
+      const res = await fetch('api/clients');
+      if (!res.ok) {
+        throw new Error('Failed to fetch clients');
+      }
+      return res.json();
+    },
+  });
 
-      const clientsData = await clientsRes.json();
-      const invoicesData = await invoicesRes.json();
-
-      setClients(clientsData.clients || []);
-      setInvoices(invoicesData.invoices || []);
-      setLoading(false);
-    };
-
-    fetchData();
-  }, []);
-
-  const refetchInvoices = async () => {
-    const res = await fetch('/api/invoices');
-    const data = await res.json();
-    setInvoices(data.invoices || []);
-  };
+  const {
+    data: invoicesData,
+    error: invoicesError,
+    isLoading: invoicesLoading,
+  } = useQuery({
+    queryKey: ['invoices'],
+    queryFn: async () => {
+      const res = await fetch('api/invoices');
+      if (!res.ok) {
+        throw new Error('Failed to fetch invoices');
+      }
+      return res.json();
+    },
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -120,7 +125,7 @@ export default function InvoicesPage() {
 
     if (res.ok) {
       setFormData({ clientId: '', startDate: '', endDate: '' });
-      refetchInvoices();
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
     } else {
       const error = await res.json();
       alert(error.error || 'Error creating invoice');
@@ -154,10 +159,20 @@ export default function InvoicesPage() {
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
-  if (loading) {
+  if (clientsLoading || invoicesLoading) {
     return (
       <div className="container mx-auto px-6 py-12">
         <div className="text-center text-slate-600">Loading...</div>
+      </div>
+    );
+  }
+
+  if (clientsError || invoicesError) {
+    return (
+      <div className="container mx-auto px-6 py-12">
+        <div className="text-center text-slate-600">
+          Error: {clientsError?.message || invoicesError?.message}
+        </div>
       </div>
     );
   }
@@ -179,7 +194,7 @@ export default function InvoicesPage() {
               required
             >
               <option value="">Select client...</option>
-              {clients.map((client) => (
+              {clientsData?.clients.map((client: Client) => (
                 <option key={client.id} value={client.id}>
                   {client.name} (${client.hourlyRate}/hr)
                 </option>
@@ -243,8 +258,8 @@ export default function InvoicesPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
-              {invoices.length > 0 ? (
-                invoices.map((invoice) => (
+              {invoicesData?.invoices.length > 0 ? (
+                invoicesData?.invoices.map((invoice: Invoice) => (
                   <tr key={invoice.id} className="hover:bg-slate-50">
                     <td className="px-6 py-4 text-slate-900">{invoice.client.name}</td>
                     <td className="px-6 py-4 text-slate-600">

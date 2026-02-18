@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 
 interface DashboardData {
   totalEarnings: number;
@@ -22,21 +22,18 @@ interface DashboardData {
 }
 
 export default function DashboardPage() {
-  const [data, setData] = useState<DashboardData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data, error, isLoading } = useQuery({
+    queryKey: ['dashboard'],
+    queryFn: async () => {
+      const res = await fetch('api/dashboard');
+      if (!res.ok) {
+        throw new Error('Failed to fetch dashboard data');
+      }
+      return res.json();
+    },
+  });
 
-  useEffect(() => {
-    const fetchDashboard = async () => {
-      const res = await fetch('/api/dashboard');
-      const dashboardData = await res.json();
-      setData(dashboardData);
-      setLoading(false);
-    };
-
-    fetchDashboard();
-  }, []);
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="container mx-auto px-6 py-12">
         <div className="text-center text-slate-600">Loading...</div>
@@ -44,10 +41,10 @@ export default function DashboardPage() {
     );
   }
 
-  if (!data) {
+  if (error) {
     return (
       <div className="container mx-auto px-6 py-12">
-        <div className="text-center text-slate-600">No data available</div>
+        <div className="text-center text-slate-600">Error: {error.message}</div>
       </div>
     );
   }
@@ -86,7 +83,7 @@ export default function DashboardPage() {
             <h2 className="text-xl font-bold text-slate-900 mb-4">By Client</h2>
             <div className="space-y-4">
               {data.byClient.length > 0 ? (
-                data.byClient.map((client) => (
+                data.byClient.map((client: DashboardData['byClient'][number]) => (
                   <div
                     key={client.clientName}
                     className="border-b border-slate-200 pb-4 last:border-b-0"
@@ -131,7 +128,7 @@ export default function DashboardPage() {
                 </thead>
                 <tbody className="divide-y divide-slate-200">
                   {data.recentEntries.length > 0 ? (
-                    data.recentEntries.map((entry) => (
+                    data.recentEntries.map((entry: DashboardData['recentEntries'][number]) => (
                       <tr key={entry.id} className="hover:bg-slate-50">
                         <td className="px-6 py-4 text-slate-900">{entry.clientName}</td>
                         <td className="px-6 py-4 text-slate-600">

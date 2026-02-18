@@ -1,7 +1,7 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/auth";
-import { prisma } from "@/lib/prisma";
-import { validateEnv } from "@/lib/env";
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/auth';
+import { prisma } from '@/lib/prisma';
+import { validateEnv } from '@/lib/env';
 
 validateEnv();
 export async function GET() {
