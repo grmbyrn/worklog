@@ -65,3 +65,37 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
   return Response.json({ invoice, entries });
 }
+
+export async function PATCH(req: Request, {params}: { params: Promise<{id: string}> }) {
+  const session = await getServerSession(authOptions);
+
+  if(!session || !session.user?.email){
+    return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const {id} = await params;
+  const {isPaid} = await req.json();
+
+  if(typeof isPaid !== 'boolean'){
+    return Response.json({error: 'Missing or invalid isPaid'}, {status: 400});
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { email: session.user.email },
+  });
+
+  if (!user) {
+    return Response.json({ error: 'User not found' }, { status: 404 });
+  }
+
+  try {
+    const invoice = await prisma.invoice.update({
+      where: { id },
+      data: { isPaid },
+    });
+
+    return Response.json({ message: 'Invoice updated successfully', invoice });
+  } catch (error) {
+    return Response.json({ error: 'Invoice not found or update failed' }, { status: 404 });
+  }
+}

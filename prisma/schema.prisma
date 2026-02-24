@@ -61,4 +61,5 @@ model Invoice {
   
   userId      String
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  isPaid      Boolean   @default(false)
 }
