@@ -65,3 +65,49 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
   return Response.json({ invoice, entries });
 }
+
+export async function PATCH(req: Request, {params}: { params: Promise<{id: string}> }) {
+  const session = await getServerSession(authOptions);
+
+  if(!session || !session.user?.email){
+    return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const {id} = await params;
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return Response.json({ error: 'Invalid JSON body' }, { status: 400 });
+  }
+  const { isPaid } = (body ?? {}) as { isPaid?: unknown };
+
+  if(typeof isPaid !== 'boolean'){
+    return Response.json({error: 'Missing or invalid isPaid'}, {status: 400});
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { email: session.user.email },
+  });
+
+  if (!user) {
+    return Response.json({ error: 'User not found' }, { status: 404 });
+  }
+  // Verify ownership: ensure the invoice belongs to the authenticated user
+  const existing = await prisma.invoice.findFirst({ where: { id, userId: user.id } });
+
+  if (!existing) {
+    return Response.json({ error: 'Invoice not found' }, { status: 404 });
+  }
+
+  try {
+    const invoice = await prisma.invoice.update({
+      where: { id },
+      data: { isPaid },
+    });
+
+    return Response.json({ message: 'Invoice updated successfully', invoice });
+  } catch (error) {
+    return Response.json({ error: 'Invoice not found or update failed' }, { status: 404 });
+  }
+}

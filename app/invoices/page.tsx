@@ -18,6 +18,7 @@ interface Invoice {
   periodStart?: string | null;
   periodEnd?: string | null;
   client: { name: string };
+  isPaid: boolean;
 }
 
 interface InvoiceEntry {
@@ -252,6 +253,7 @@ export default function InvoicesPage() {
                 <th className="px-6 py-4 text-right text-sm font-semibold text-slate-900">
                   Amount
                 </th>
+                <th className="px-6 py-4 text-center text-sm font-semibold text-slate-900">Status</th>
                 <th className="px-6 py-4 text-right text-sm font-semibold text-slate-900">
                   Actions
                 </th>
@@ -271,7 +273,41 @@ export default function InvoicesPage() {
                     <td className="px-6 py-4 text-right font-semibold text-slate-900">
                       ${invoice.totalAmount.toFixed(2)}
                     </td>
+                    <td className="px-6 py-4 text-center">
+                      {invoice.isPaid ? 'Paid' : 'Unpaid'}
+                    </td>
                     <td className="px-6 py-4 text-right space-x-2">
+                      <button
+                        onClick={async () => {
+                          try {
+                            const res = await fetch(`/api/invoices/${invoice.id}`, {
+                              method: 'PATCH',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ isPaid: !invoice.isPaid }),
+                            });
+
+                            if (!res.ok) {
+                              const errorBody = await res.json().catch(() => null);
+                              const message =
+                                errorBody?.error || errorBody?.message || 'Failed to update invoice status';
+                              alert(message);
+                              return;
+                            }
+
+                            queryClient.invalidateQueries({ queryKey: ['invoices'] });
+                          } catch (err) {
+                            console.error('Network error updating invoice:', err);
+                            alert('Network error updating invoice');
+                          }
+                        }}
+                        className={`px-3 py-2 text-sm rounded-lg transition-colors ${
+                          invoice.isPaid
+                            ? 'bg-yellow-500 text-white hover:bg-yellow-600'
+                            : 'bg-green-600 text-white hover:bg-green-700'
+                        }`}
+                      >
+                        {invoice.isPaid ? 'Mark as Unpaid' : 'Mark as Paid'}
+                      </button>
                       <button
                         onClick={() => handleView(invoice.id)}
                         className="px-3 py-2 text-sm bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition-colors"
