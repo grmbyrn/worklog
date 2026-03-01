@@ -74,7 +74,13 @@ export async function PATCH(req: Request, {params}: { params: Promise<{id: strin
   }
 
   const {id} = await params;
-  const {isPaid} = await req.json();
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return Response.json({ error: 'Invalid JSON body' }, { status: 400 });
+  }
+  const { isPaid } = (body ?? {}) as { isPaid?: unknown };
 
   if(typeof isPaid !== 'boolean'){
     return Response.json({error: 'Missing or invalid isPaid'}, {status: 400});
