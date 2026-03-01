@@ -87,6 +87,12 @@ export async function PATCH(req: Request, {params}: { params: Promise<{id: strin
   if (!user) {
     return Response.json({ error: 'User not found' }, { status: 404 });
   }
+  // Verify ownership: ensure the invoice belongs to the authenticated user
+  const existing = await prisma.invoice.findFirst({ where: { id, userId: user.id } });
+
+  if (!existing) {
+    return Response.json({ error: 'Invoice not found' }, { status: 404 });
+  }
 
   try {
     const invoice = await prisma.invoice.update({

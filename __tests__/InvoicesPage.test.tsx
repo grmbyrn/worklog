@@ -3,8 +3,11 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import InvoicesPage from '../app/invoices/page';
 
 // Mock fetch for clients and invoices
-beforeAll(() => {
-  let paid = false;
+let paid = false;
+
+beforeEach(() => {
+  paid = false;
+
   global.fetch = jest.fn((url, options) => {
     if (url === 'api/clients') {
       return Promise.resolve({
@@ -41,7 +44,7 @@ beforeAll(() => {
   }) as jest.Mock;
 });
 
-afterAll(() => {
+afterEach(() => {
   jest.resetAllMocks();
 });
 

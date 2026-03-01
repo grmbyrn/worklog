@@ -115,9 +115,6 @@ export default function InvoicesPage() {
     },
   });
 
-  // Debug: log invoicesData to check isPaid status
-  console.log('invoicesData:', invoicesData);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -282,12 +279,26 @@ export default function InvoicesPage() {
                     <td className="px-6 py-4 text-right space-x-2">
                       <button
                         onClick={async () => {
-                          await fetch(`/api/invoices/${invoice.id}`, {
-                            method: 'PATCH',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ isPaid: !invoice.isPaid }),
-                          });
-                          queryClient.invalidateQueries({ queryKey: ['invoices'] });
+                          try {
+                            const res = await fetch(`/api/invoices/${invoice.id}`, {
+                              method: 'PATCH',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ isPaid: !invoice.isPaid }),
+                            });
+
+                            if (!res.ok) {
+                              const errorBody = await res.json().catch(() => null);
+                              const message =
+                                errorBody?.error || errorBody?.message || 'Failed to update invoice status';
+                              alert(message);
+                              return;
+                            }
+
+                            queryClient.invalidateQueries({ queryKey: ['invoices'] });
+                          } catch (err) {
+                            console.error('Network error updating invoice:', err);
+                            alert('Network error updating invoice');
+                          }
                         }}
                         className={`px-3 py-2 text-sm rounded-lg transition-colors ${
                           invoice.isPaid
