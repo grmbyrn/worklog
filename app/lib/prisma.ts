@@ -30,14 +30,14 @@ export const prisma = new Proxy({} as PrismaClient, {
     if (!_instance) {
       _instance = createPrismaInstance();
     }
-    // @ts-ignore
-    return (_instance as any)[prop];
+    // Proxy forwards to the initialized PrismaClient
+    return Reflect.get(_instance as unknown as object, prop);
   },
   apply(_target, thisArg, args) {
     if (!_instance) {
       _instance = createPrismaInstance();
     }
-    // @ts-ignore
-    return (_instance as any).apply(thisArg, args);
+    // Proxy forwards function calls to the initialized PrismaClient
+    return Reflect.apply(_instance as unknown as (...args: unknown[]) => unknown, thisArg, args);
   },
 }) as unknown as PrismaClient;
