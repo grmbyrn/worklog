@@ -3,8 +3,8 @@ import { authOptions } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import { validateEnv } from '@/lib/env';
 
-validateEnv();
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  validateEnv();
   const session = await getServerSession(authOptions);
 
   if (!session || !session.user?.email) {
@@ -67,6 +67,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 }
 
 export async function PATCH(req: Request, {params}: { params: Promise<{id: string}> }) {
+  validateEnv();
   const session = await getServerSession(authOptions);
 
   if(!session || !session.user?.email){
@@ -107,7 +108,8 @@ export async function PATCH(req: Request, {params}: { params: Promise<{id: strin
     });
 
     return Response.json({ message: 'Invoice updated successfully', invoice });
-  } catch (error) {
+  } catch (error: unknown) {
+    console.error(error);
     return Response.json({ error: 'Invoice not found or update failed' }, { status: 404 });
   }
 }

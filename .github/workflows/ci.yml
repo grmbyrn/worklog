@@ -64,6 +64,24 @@ jobs:
           NEXTAUTH_URL: http://localhost
         run: npm test --silent
 
+      - name: Validate required environment variables
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/testdb
+          NEXTAUTH_SECRET: test-secret
+          NEXTAUTH_URL: http://localhost
+        run: |
+          required=(DATABASE_URL NEXTAUTH_SECRET NEXTAUTH_URL)
+          missing=()
+          for v in "${required[@]}"; do
+            if [ -z "${!v}" ]; then
+              missing+=("$v")
+            fi
+          done
+          if [ ${#missing[@]} -ne 0 ]; then
+            echo "Missing required environment variables: ${missing[*]}"
+            exit 1
+          fi
+
       - name: Build
         run: npm run build
 

@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { validateEnv } from '@/lib/env';
 
-validateEnv();
 export async function GET() {
+  validateEnv();
   try {
     // Try to query the database
     const userCount = await prisma.user.count();

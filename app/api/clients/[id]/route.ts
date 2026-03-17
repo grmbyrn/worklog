@@ -4,8 +4,8 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/auth';
 import { validateEnv } from '@/lib/env';
 
-validateEnv();
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  validateEnv();
   const { id } = await params;
   const session = await getServerSession(authOptions);
   if (!session) {
@@ -48,6 +48,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 }
 
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  validateEnv();
   const { id } = await params;
   const session = await getServerSession(authOptions);
   if (!session) {

@@ -3,8 +3,8 @@ import { authOptions } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import { validateEnv } from '@/lib/env';
 
-validateEnv();
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  validateEnv();
   const session = await getServerSession(authOptions);
 
   if (!session || !session.user?.email) {
