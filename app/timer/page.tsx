@@ -110,7 +110,7 @@ export default function TimerPage() {
     return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
   };
 
-  const selectedClient = clientsData?.find((c: Client) => c.id === selectedClientId);
+  const selectedClient = clientsData?.clients?.find((c: Client) => c.id === selectedClientId);
   const currentEarnings = selectedClient ? (seconds / 3600) * selectedClient.hourlyRate : 0;
 
   if (clientsLoading) {
@@ -144,7 +144,7 @@ export default function TimerPage() {
             className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 disabled:bg-slate-100"
           >
             <option value="">Choose a client...</option>
-            {clientsData?.map((client: Client) => (
+            {clientsData?.clients?.map((client: Client) => (
               <option key={client.id} value={client.id}>
                 {client.name} (${client.hourlyRate}/hr)
               </option>

@@ -52,7 +52,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     const start = new Date(entry.startTime as Date);
     const end = new Date(entry.endTime as Date);
     const hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
-    const amount = hours * invoice.client.hourlyRate;
+    const amount = hours * Number(invoice.hourlyRate);
 
     return {
       id: entry.id,

@@ -2,6 +2,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import { validateEnv } from '@/lib/env';
+import type { Prisma } from '@prisma/client';
 
 export async function GET() {
   validateEnv();
@@ -36,7 +37,7 @@ export async function POST(req: Request) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { clientId, startDate, endDate } = await req.json();
+  const { clientId, startDate, endDate, hourlyRate } = await req.json();
 
   if (!clientId || !startDate || !endDate) {
     return Response.json({ error: 'Missing required fields' }, { status: 400 });
@@ -86,17 +87,36 @@ export async function POST(req: Request) {
       return sum + hours;
     }, 0);
 
-    const totalAmount = totalHours * client.hourlyRate;
+    // Validate override hourlyRate if provided, otherwise validate and use client's stored rate
+    let rate: number;
+    if (typeof hourlyRate !== 'undefined' && hourlyRate !== null && hourlyRate !== '') {
+      const parsed = Number(hourlyRate);
+      if (!Number.isFinite(parsed) || parsed < 0) {
+        return Response.json({ error: 'Invalid hourlyRate override' }, { status: 400 });
+      }
+      rate = parsed;
+    } else {
+      const clientRate = Number(client.hourlyRate);
+      if (!Number.isFinite(clientRate) || clientRate < 0) {
+        return Response.json({ error: 'Client has invalid hourlyRate' }, { status: 400 });
+      }
+      rate = clientRate;
+    }
+
+    const totalAmount = totalHours * rate;
+
+    const invoiceData: Prisma.InvoiceUncheckedCreateInput = {
+      totalHours: parseFloat(totalHours.toFixed(2)),
+      totalAmount: parseFloat(totalAmount.toFixed(2)),
+      hourlyRate: parseFloat(rate.toFixed(2)),
+      periodStart: from,
+      periodEnd: to,
+      clientId,
+      userId: user.id,
+    };
 
     const invoice = await prisma.invoice.create({
-      data: {
-        totalHours: parseFloat(totalHours.toFixed(2)),
-        totalAmount: parseFloat(totalAmount.toFixed(2)),
-        periodStart: from,
-        periodEnd: to,
-        clientId,
-        userId: user.id,
-      },
+      data: invoiceData,
       include: { client: true },
     });
 

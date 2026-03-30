@@ -43,7 +43,8 @@ export async function GET() {
       const startTime = new Date(entry.startTime as Date);
       const endTime = new Date(entry.endTime as Date);
       const hours = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
-      const earnings = hours * entry.client.hourlyRate;
+      const rate = Number(entry.client.hourlyRate);
+      const earnings = hours * rate;
 
       totalEarnings += earnings;
 
@@ -66,7 +67,7 @@ export async function GET() {
         const startTime = new Date(entry.startTime as Date);
         const endTime = new Date(entry.endTime as Date);
         const hours = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
-        const earnings = hours * entry.client.hourlyRate;
+        const earnings = hours * Number(entry.client.hourlyRate);
 
         return {
           id: entry.id,
@@ -88,7 +89,7 @@ export async function GET() {
         const startTime = new Date(entry.startTime as Date);
         const endTime = new Date(entry.endTime as Date);
         const hours = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
-        return sum + hours * entry.client.hourlyRate;
+        return sum + hours * Number(entry.client.hourlyRate);
       }, 0);
 
     // Calculate monthly earnings
@@ -101,7 +102,7 @@ export async function GET() {
         const startTime = new Date(entry.startTime as Date);
         const endTime = new Date(entry.endTime as Date);
         const hours = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
-        return sum + hours * entry.client.hourlyRate;
+        return sum + hours * Number(entry.client.hourlyRate);
       }, 0);
 
     return Response.json({
