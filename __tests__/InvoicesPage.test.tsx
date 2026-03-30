@@ -10,13 +10,14 @@ beforeEach(() => {
   paid = false;
 
   global.fetch = jest.fn((url, options) => {
-    if (url === 'api/clients') {
+    const urlStr = String(url);
+    if (urlStr.endsWith('api/clients') || urlStr === 'api/clients') {
       return Promise.resolve({
         ok: true,
         json: () => Promise.resolve({ clients: [{ id: '1', name: 'Test Client', hourlyRate: 100 }] }),
       });
     }
-    if (url === 'api/invoices') {
+    if (urlStr.endsWith('api/invoices') || urlStr === 'api/invoices') {
       return Promise.resolve({
         ok: true,
         json: () => Promise.resolve({
@@ -33,7 +34,7 @@ beforeEach(() => {
         }),
       });
     }
-    if (url.startsWith('/api/invoices/') && options?.method === 'PATCH') {
+    if ((urlStr.endsWith('/api/invoices/') || urlStr.includes('/api/invoices/')) && options?.method === 'PATCH') {
       paid = true;
       return Promise.resolve({
         ok: true,
@@ -57,7 +58,7 @@ describe('Invoices page', () => {
         <InvoicesPage />
       </QueryClientProvider>,
     );
-    expect(await screen.findByText(/invoices/i)).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /invoices/i })).toBeInTheDocument();
   });
 
   it('shows invoice as unpaid by default', async () => {
@@ -67,7 +68,7 @@ describe('Invoices page', () => {
         <InvoicesPage />
       </QueryClientProvider>,
     );
-    expect(await screen.findByText(/unpaid/i)).toBeInTheDocument();
+    expect(await screen.findByText(/^Unpaid$/i)).toBeInTheDocument();
   });
 
   it('prefills hourly rate from selected client and sends it on create', async () => {

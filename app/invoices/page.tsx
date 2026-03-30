@@ -193,7 +193,7 @@ export default function InvoicesPage() {
               value={formData.clientId}
               onChange={(e) => {
                 const clientId = e.target.value;
-                const client = clientsData?.clients.find((c: Client) => c.id === clientId);
+                const client = clientsData?.clients?.find((c: Client) => c.id === clientId);
                 setFormData({
                   ...formData,
                   clientId,
@@ -204,7 +204,7 @@ export default function InvoicesPage() {
               required
             >
               <option value="">Select client...</option>
-              {clientsData?.clients.map((client: Client) => (
+              {clientsData?.clients?.map((client: Client) => (
                 <option key={client.id} value={client.id}>
                   {client.name} (${client.hourlyRate}/hr)
                 </option>
@@ -280,8 +280,8 @@ export default function InvoicesPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
-              {invoicesData?.invoices.length > 0 ? (
-                invoicesData?.invoices.map((invoice: Invoice) => (
+              {invoicesData?.invoices?.length > 0 ? (
+                invoicesData?.invoices?.map((invoice: Invoice) => (
                   <tr key={invoice.id} className="hover:bg-slate-50">
                     <td className="px-6 py-4 text-slate-900">{invoice.client.name}</td>
                     <td className="px-6 py-4 text-slate-600">
