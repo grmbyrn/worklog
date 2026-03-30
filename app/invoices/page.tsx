@@ -93,7 +93,7 @@ export default function InvoicesPage() {
   } = useQuery({
     queryKey: ['clients'],
     queryFn: async () => {
-      const res = await fetch('api/clients');
+      const res = await fetch('/api/clients');
       if (!res.ok) {
         throw new Error('Failed to fetch clients');
       }
@@ -108,7 +108,7 @@ export default function InvoicesPage() {
   } = useQuery({
     queryKey: ['invoices'],
     queryFn: async () => {
-      const res = await fetch('api/invoices');
+      const res = await fetch('/api/invoices');
       if (!res.ok) {
         throw new Error('Failed to fetch invoices');
       }

@@ -87,10 +87,21 @@ export async function POST(req: Request) {
       return sum + hours;
     }, 0);
 
-    // Use provided hourlyRate (override) if present, otherwise fall back to client's stored rate
-    const rate = typeof hourlyRate !== 'undefined' && !isNaN(Number(hourlyRate))
-      ? Number(hourlyRate)
-      : Number(client.hourlyRate);
+    // Validate override hourlyRate if provided, otherwise validate and use client's stored rate
+    let rate: number;
+    if (typeof hourlyRate !== 'undefined' && hourlyRate !== null && hourlyRate !== '') {
+      const parsed = Number(hourlyRate);
+      if (!Number.isFinite(parsed) || parsed < 0) {
+        return Response.json({ error: 'Invalid hourlyRate override' }, { status: 400 });
+      }
+      rate = parsed;
+    } else {
+      const clientRate = Number(client.hourlyRate);
+      if (!Number.isFinite(clientRate) || clientRate < 0) {
+        return Response.json({ error: 'Client has invalid hourlyRate' }, { status: 400 });
+      }
+      rate = clientRate;
+    }
 
     const totalAmount = totalHours * rate;
 
