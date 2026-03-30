@@ -2,6 +2,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import { validateEnv } from '@/lib/env';
+import type { Prisma } from '@prisma/client';
 
 export async function GET() {
   validateEnv();
@@ -36,7 +37,7 @@ export async function POST(req: Request) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { clientId, startDate, endDate } = await req.json();
+  const { clientId, startDate, endDate, hourlyRate } = await req.json();
 
   if (!clientId || !startDate || !endDate) {
     return Response.json({ error: 'Missing required fields' }, { status: 400 });
@@ -86,17 +87,25 @@ export async function POST(req: Request) {
       return sum + hours;
     }, 0);
 
-    const totalAmount = totalHours * client.hourlyRate;
+    // Use provided hourlyRate (override) if present, otherwise fall back to client's stored rate
+    const rate = typeof hourlyRate !== 'undefined' && !isNaN(Number(hourlyRate))
+      ? Number(hourlyRate)
+      : Number(client.hourlyRate);
+
+    const totalAmount = totalHours * rate;
+
+    const invoiceData: Prisma.InvoiceUncheckedCreateInput = {
+      totalHours: parseFloat(totalHours.toFixed(2)),
+      totalAmount: parseFloat(totalAmount.toFixed(2)),
+      hourlyRate: parseFloat(rate.toFixed(2)),
+      periodStart: from,
+      periodEnd: to,
+      clientId,
+      userId: user.id,
+    };
 
     const invoice = await prisma.invoice.create({
-      data: {
-        totalHours: parseFloat(totalHours.toFixed(2)),
-        totalAmount: parseFloat(totalAmount.toFixed(2)),
-        periodStart: from,
-        periodEnd: to,
-        clientId,
-        userId: user.id,
-      },
+      data: invoiceData,
       include: { client: true },
     });
 

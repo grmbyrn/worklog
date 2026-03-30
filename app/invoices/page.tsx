@@ -82,6 +82,7 @@ export default function InvoicesPage() {
     clientId: '',
     startDate: '',
     endDate: '',
+    hourlyRate: ''
   });
   const queryClient = useQueryClient();
 
@@ -125,7 +126,7 @@ export default function InvoicesPage() {
     });
 
     if (res.ok) {
-      setFormData({ clientId: '', startDate: '', endDate: '' });
+      setFormData({ clientId: '', startDate: '', endDate: '', hourlyRate: '' });
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
     } else {
       const error = await res.json();
@@ -190,7 +191,15 @@ export default function InvoicesPage() {
             <label className="block text-sm font-semibold text-slate-900 mb-2">Client</label>
             <select
               value={formData.clientId}
-              onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
+              onChange={(e) => {
+                const clientId = e.target.value;
+                const client = clientsData?.clients.find((c: Client) => c.id === clientId);
+                setFormData({
+                  ...formData,
+                  clientId,
+                  hourlyRate: client ? String(client.hourlyRate) : '',
+                });
+              }}
               className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900"
               required
             >
@@ -226,6 +235,17 @@ export default function InvoicesPage() {
           </div>
 
           <div className="md:col-span-3">
+            <div className="mb-4">
+              <label className="block text-sm font-semibold text-slate-900 mb-2">Hourly Rate ($)</label>
+              <input
+                type="number"
+                value={formData.hourlyRate}
+                onChange={(e) => setFormData({ ...formData, hourlyRate: e.target.value })}
+                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900"
+                min="0"
+                step="0.01"
+              />
+            </div>
             <button
               type="submit"
               className="px-6 py-3 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors"
