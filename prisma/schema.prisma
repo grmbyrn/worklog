@@ -66,4 +66,6 @@ model Invoice {
   userId      String
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   isPaid      Boolean   @default(false)
+  // Optional due date for the invoice; if not provided, default applied in server logic
+  dueDate     DateTime?
 }

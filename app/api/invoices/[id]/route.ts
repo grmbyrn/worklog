@@ -63,18 +63,24 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     };
   });
 
-  return Response.json({ invoice, entries });
+  const now = new Date();
+  const invoiceWithOverdue = {
+    ...invoice,
+    isOverdue: !invoice.isPaid && !!invoice.dueDate && new Date(invoice.dueDate) < now,
+  };
+
+  return Response.json({ invoice: invoiceWithOverdue, entries });
 }
 
-export async function PATCH(req: Request, {params}: { params: Promise<{id: string}> }) {
+export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   validateEnv();
   const session = await getServerSession(authOptions);
 
-  if(!session || !session.user?.email){
+  if (!session || !session.user?.email) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const {id} = await params;
+  const { id } = await params;
   let body: unknown;
   try {
     body = await req.json();
@@ -83,8 +89,8 @@ export async function PATCH(req: Request, {params}: { params: Promise<{id: strin
   }
   const { isPaid } = (body ?? {}) as { isPaid?: unknown };
 
-  if(typeof isPaid !== 'boolean'){
-    return Response.json({error: 'Missing or invalid isPaid'}, {status: 400});
+  if (typeof isPaid !== 'boolean') {
+    return Response.json({ error: 'Missing or invalid isPaid' }, { status: 400 });
   }
 
   const user = await prisma.user.findUnique({
