@@ -29,7 +29,7 @@ export async function GET() {
   const now = new Date();
   const invoicesWithOverdue = invoices.map((inv) => ({
     ...inv,
-    isOverdue: !inv.isPaid && !!inv.dueDate && new Date(inv.dueDate) < now,
+    isOverdue: inv.status !== 'PAID' && !!inv.dueDate && new Date(inv.dueDate) < now,
   }));
 
   return Response.json({ invoices: invoicesWithOverdue });
@@ -123,6 +123,7 @@ export async function POST(req: Request) {
       clientId,
       userId: user.id,
       dueDate: due,
+      status: 'DRAFT',
     };
 
     const invoice = await prisma.invoice.create({
