@@ -2,6 +2,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import { validateEnv } from '@/lib/env';
+import type { Prisma, InvoiceStatus } from '@prisma/client';
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   validateEnv();
@@ -87,10 +88,20 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   } catch {
     return Response.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
-  const { isPaid } = (body ?? {}) as { isPaid?: unknown };
+  const { isPaid, status } = (body ?? {}) as { isPaid?: unknown; status?: unknown };
 
-  if (typeof isPaid !== 'boolean') {
-    return Response.json({ error: 'Missing or invalid isPaid' }, { status: 400 });
+  const allowedStatuses = ['DRAFT', 'SENT', 'PAID', 'OVERDUE'];
+
+  if (typeof isPaid === 'undefined' && typeof status === 'undefined') {
+    return Response.json({ error: 'Missing update fields' }, { status: 400 });
+  }
+
+  if (typeof status !== 'undefined' && typeof status !== 'string') {
+    return Response.json({ error: 'Invalid status' }, { status: 400 });
+  }
+
+  if (typeof status === 'string' && !allowedStatuses.includes(status)) {
+    return Response.json({ error: 'Unknown status' }, { status: 400 });
   }
 
   const user = await prisma.user.findUnique({
@@ -108,10 +119,20 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   }
 
   try {
-    const invoice = await prisma.invoice.update({
-      where: { id },
-      data: { isPaid },
-    });
+    const updateData: Prisma.InvoiceUncheckedUpdateInput = {};
+
+    if (typeof isPaid === 'boolean') updateData.isPaid = isPaid;
+    if (typeof status === 'string') updateData.status = status as InvoiceStatus;
+
+    // Keep isPaid in sync if status is set to PAID
+    if (status === 'PAID') updateData.isPaid = true;
+
+    // If marking as not paid, ensure isPaid flag reflects that
+    if (status && status !== 'PAID' && typeof isPaid === 'undefined') {
+      updateData.isPaid = false;
+    }
+
+    const invoice = await prisma.invoice.update({ where: { id }, data: updateData });
 
     return Response.json({ message: 'Invoice updated successfully', invoice });
   } catch (error: unknown) {

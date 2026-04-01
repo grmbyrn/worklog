@@ -59,6 +59,8 @@ model Invoice {
   periodStart DateTime?
   periodEnd   DateTime?
   createdAt   DateTime  @default(now())
+  // Status of the invoice: draft, sent, paid, overdue
+  status      InvoiceStatus @default(DRAFT)
   
   clientId    String
   client      Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
@@ -68,4 +70,11 @@ model Invoice {
   isPaid      Boolean   @default(false)
   // Optional due date for the invoice; if not provided, default applied in server logic
   dueDate     DateTime?
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  OVERDUE
 }

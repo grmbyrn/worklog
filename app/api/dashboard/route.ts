@@ -1,7 +1,7 @@
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/auth';
 import { prisma } from '@/lib/prisma';
-import type { TimeEntry, Client } from '@prisma/client';
+import type { TimeEntry, Client, Prisma } from '@prisma/client';
 import { validateEnv } from '@/lib/env';
 
 export async function GET() {
@@ -105,6 +105,27 @@ export async function GET() {
         return sum + hours * Number(entry.client.hourlyRate);
       }, 0);
 
+    // Invoice counts: unpaid (not PAID) and overdue (status OVERDUE or dueDate passed and not PAID)
+    const now = new Date();
+    const unpaidCount = await prisma.invoice.count({
+      where: { userId: user.id, NOT: { status: 'PAID' } } as Prisma.InvoiceWhereInput,
+    });
+
+    const overdueCount = await prisma.invoice.count({
+      where: ({
+        userId: user.id,
+        AND: [
+          { NOT: { status: 'PAID' } },
+          {
+            OR: [
+              { status: 'OVERDUE' },
+              { dueDate: { lt: now } },
+            ],
+          },
+        ],
+      } as Prisma.InvoiceWhereInput),
+    });
+
     return Response.json({
       totalEarnings: parseFloat(totalEarnings.toFixed(2)),
       weeklyEarnings: parseFloat(weeklyEarnings.toFixed(2)),
@@ -115,6 +136,8 @@ export async function GET() {
         hours: parseFloat(data.hours.toFixed(2)),
       })),
       recentEntries,
+      unpaidCount,
+      overdueCount,
     });
   } catch (error) {
     console.error('Error fetching dashboard data:', error);

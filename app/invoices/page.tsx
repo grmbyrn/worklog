@@ -21,6 +21,7 @@ interface Invoice {
   periodEnd?: string | null;
   client: { name: string };
   isPaid: boolean;
+  status?: string;
   dueDate?: string | null;
   isOverdue?: boolean;
 }
@@ -320,7 +321,21 @@ export default function InvoicesPage() {
                       ${invoice.totalAmount.toFixed(2)}
                     </td>
                     <td className="px-6 py-4 text-center">
-                      {invoice.isOverdue ? 'Overdue' : invoice.isPaid ? 'Paid' : 'Unpaid'}
+                      <div className="inline-flex items-center space-x-2">
+                        <span
+                          className={`px-2 py-1 text-sm rounded-full font-semibold text-white ${
+                            invoice.status === 'PAID'
+                              ? 'bg-green-600'
+                              : invoice.status === 'SENT'
+                              ? 'bg-blue-600'
+                              : invoice.status === 'OVERDUE'
+                              ? 'bg-red-600'
+                              : 'bg-slate-500'
+                          }`}
+                        >
+                          {invoice.status ? invoice.status.toLowerCase() : invoice.isOverdue ? 'overdue' : invoice.isPaid ? 'paid' : 'unpaid'}
+                        </span>
+                      </div>
                     </td>
                     <td className="px-6 py-4 text-right space-x-2">
                       <button
@@ -356,6 +371,36 @@ export default function InvoicesPage() {
                       >
                         {invoice.isPaid ? 'Mark as Unpaid' : 'Mark as Paid'}
                       </button>
+                      <select
+                        value={invoice.status || (invoice.isPaid ? 'PAID' : 'DRAFT')}
+                        onChange={async (e) => {
+                          const newStatus = e.target.value;
+                          try {
+                            const res = await fetch(`/api/invoices/${invoice.id}`, {
+                              method: 'PATCH',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ status: newStatus }),
+                            });
+
+                            if (!res.ok) {
+                              const err = await res.json().catch(() => null);
+                              alert(err?.error || 'Failed to update status');
+                              return;
+                            }
+
+                            queryClient.invalidateQueries({ queryKey: ['invoices'] });
+                          } catch (err) {
+                            console.error('Network error updating status', err);
+                            alert('Network error');
+                          }
+                        }}
+                        className="ml-2 px-2 py-1 border rounded-lg text-sm"
+                      >
+                        <option value="DRAFT">draft</option>
+                        <option value="SENT">sent</option>
+                        <option value="PAID">paid</option>
+                        <option value="OVERDUE">overdue</option>
+                      </select>
                       <button
                         onClick={() => handleView(invoice.id)}
                         className="px-3 py-2 text-sm bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition-colors"

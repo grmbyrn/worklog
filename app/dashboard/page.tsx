@@ -19,6 +19,8 @@ interface DashboardData {
     hours: number;
     earnings: number;
   }>;
+  unpaidCount?: number;
+  overdueCount?: number;
 }
 
 export default function DashboardPage() {
@@ -73,6 +75,18 @@ export default function DashboardPage() {
           <div className="text-4xl font-bold text-slate-900">
             ${data.monthlyEarnings.toFixed(2)}
           </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="text-slate-600 text-sm font-semibold mb-2">Unpaid Invoices</div>
+          <div className="text-4xl font-bold text-slate-900">{data.unpaidCount ?? 0}</div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="text-slate-600 text-sm font-semibold mb-2">Overdue Invoices</div>
+          <div className="text-4xl font-bold text-red-600">{data.overdueCount ?? 0}</div>
         </div>
       </div>
 
