@@ -14,27 +14,32 @@ beforeEach(() => {
     if (urlStr.endsWith('api/clients') || urlStr === 'api/clients') {
       return Promise.resolve({
         ok: true,
-        json: () => Promise.resolve({ clients: [{ id: '1', name: 'Test Client', hourlyRate: 100 }] }),
+        json: () =>
+          Promise.resolve({ clients: [{ id: '1', name: 'Test Client', hourlyRate: 100 }] }),
       });
     }
     if (urlStr.endsWith('api/invoices') || urlStr === 'api/invoices') {
       return Promise.resolve({
         ok: true,
-        json: () => Promise.resolve({
-          invoices: [
-            {
-              id: '1',
-              totalHours: 10,
-              totalAmount: 1000,
-              createdAt: new Date().toISOString(),
-              client: { name: 'Test Client' },
-              isPaid: paid,
-            },
-          ],
-        }),
+        json: () =>
+          Promise.resolve({
+            invoices: [
+              {
+                id: '1',
+                totalHours: 10,
+                totalAmount: 1000,
+                createdAt: new Date().toISOString(),
+                client: { name: 'Test Client' },
+                isPaid: paid,
+              },
+            ],
+          }),
       });
     }
-    if ((urlStr.endsWith('/api/invoices/') || urlStr.includes('/api/invoices/')) && options?.method === 'PATCH') {
+    if (
+      (urlStr.endsWith('/api/invoices/') || urlStr.includes('/api/invoices/')) &&
+      options?.method === 'PATCH'
+    ) {
       paid = true;
       return Promise.resolve({
         ok: true,
@@ -83,10 +88,16 @@ describe('Invoices page', () => {
       if (urlStr.endsWith('api/clients') || urlStr === 'api/clients') {
         return Promise.resolve({
           ok: true,
-          json: () => Promise.resolve({ clients: [{ id: '1', name: 'Test Client', hourlyRate: 100 }] }),
+          json: () =>
+            Promise.resolve({ clients: [{ id: '1', name: 'Test Client', hourlyRate: 100 }] }),
         });
       }
-      if ((urlStr.endsWith('/api/invoices') || urlStr === 'api/invoices' || urlStr.endsWith('api/invoices')) && options?.method === 'POST') {
+      if (
+        (urlStr.endsWith('/api/invoices') ||
+          urlStr === 'api/invoices' ||
+          urlStr.endsWith('api/invoices')) &&
+        options?.method === 'POST'
+      ) {
         lastPostBody = JSON.parse(String(options.body));
         return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
       }
@@ -112,7 +123,9 @@ describe('Invoices page', () => {
 
     // fill required date inputs (native validation prevents submit otherwise)
     const { container } = rendered;
-    const dateInputs = container.querySelectorAll('input[type="date"]') as NodeListOf<HTMLInputElement>;
+    const dateInputs = container.querySelectorAll(
+      'input[type="date"]',
+    ) as NodeListOf<HTMLInputElement>;
     const today = new Date().toISOString().slice(0, 10);
     if (dateInputs.length >= 2) {
       fireEvent.change(dateInputs[0], { target: { value: today } });

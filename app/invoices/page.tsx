@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { jsPDF } from 'jspdf';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
+const DEFAULT_DUE_DATE = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
 interface Client {
   id: string;
   name: string;
@@ -19,6 +21,8 @@ interface Invoice {
   periodEnd?: string | null;
   client: { name: string };
   isPaid: boolean;
+  dueDate?: string | null;
+  isOverdue?: boolean;
 }
 
 interface InvoiceEntry {
@@ -41,6 +45,7 @@ const buildInvoicePdf = (invoice: Invoice, entries: InvoiceEntry[]) => {
     ? new Date(invoice.periodStart).toLocaleDateString()
     : 'N/A';
   const periodEnd = invoice.periodEnd ? new Date(invoice.periodEnd).toLocaleDateString() : 'N/A';
+  const dueDate = invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : 'N/A';
 
   doc.setFontSize(18);
   doc.text('Worklog Invoice', 14, 20);
@@ -48,11 +53,12 @@ const buildInvoicePdf = (invoice: Invoice, entries: InvoiceEntry[]) => {
   doc.setFontSize(12);
   doc.text(`Client: ${invoice.client.name}`, 14, 32);
   doc.text(`Period: ${periodStart} - ${periodEnd}`, 14, 40);
-  doc.text(`Created: ${createdAt}`, 14, 48);
-  doc.text(`Total Hours: ${invoice.totalHours.toFixed(2)}`, 14, 56);
-  doc.text(`Total Amount: $${invoice.totalAmount.toFixed(2)}`, 14, 64);
+  doc.text(`Due: ${dueDate}`, 14, 48);
+  doc.text(`Created: ${createdAt}`, 14, 56);
+  doc.text(`Total Hours: ${invoice.totalHours.toFixed(2)}`, 14, 64);
+  doc.text(`Total Amount: $${invoice.totalAmount.toFixed(2)}`, 14, 72);
 
-  let y = 76;
+  let y = 84;
   doc.setFontSize(11);
   doc.text('Entries', 14, y);
   y += 8;
@@ -82,7 +88,8 @@ export default function InvoicesPage() {
     clientId: '',
     startDate: '',
     endDate: '',
-    hourlyRate: ''
+    hourlyRate: '',
+    dueDate: DEFAULT_DUE_DATE,
   });
   const queryClient = useQueryClient();
 
@@ -126,7 +133,13 @@ export default function InvoicesPage() {
     });
 
     if (res.ok) {
-      setFormData({ clientId: '', startDate: '', endDate: '', hourlyRate: '' });
+      setFormData({
+        clientId: '',
+        startDate: '',
+        endDate: '',
+        hourlyRate: '',
+        dueDate: DEFAULT_DUE_DATE,
+      });
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
     } else {
       const error = await res.json();
@@ -236,7 +249,9 @@ export default function InvoicesPage() {
 
           <div className="md:col-span-3">
             <div className="mb-4">
-              <label className="block text-sm font-semibold text-slate-900 mb-2">Hourly Rate ($)</label>
+              <label className="block text-sm font-semibold text-slate-900 mb-2">
+                Hourly Rate ($)
+              </label>
               <input
                 type="number"
                 value={formData.hourlyRate}
@@ -244,6 +259,15 @@ export default function InvoicesPage() {
                 className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900"
                 min="0"
                 step="0.01"
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-semibold text-slate-900 mb-2">Due Date</label>
+              <input
+                type="date"
+                value={formData.dueDate}
+                onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900"
               />
             </div>
             <button
@@ -273,7 +297,9 @@ export default function InvoicesPage() {
                 <th className="px-6 py-4 text-right text-sm font-semibold text-slate-900">
                   Amount
                 </th>
-                <th className="px-6 py-4 text-center text-sm font-semibold text-slate-900">Status</th>
+                <th className="px-6 py-4 text-center text-sm font-semibold text-slate-900">
+                  Status
+                </th>
                 <th className="px-6 py-4 text-right text-sm font-semibold text-slate-900">
                   Actions
                 </th>
@@ -294,7 +320,7 @@ export default function InvoicesPage() {
                       ${invoice.totalAmount.toFixed(2)}
                     </td>
                     <td className="px-6 py-4 text-center">
-                      {invoice.isPaid ? 'Paid' : 'Unpaid'}
+                      {invoice.isOverdue ? 'Overdue' : invoice.isPaid ? 'Paid' : 'Unpaid'}
                     </td>
                     <td className="px-6 py-4 text-right space-x-2">
                       <button
@@ -309,7 +335,9 @@ export default function InvoicesPage() {
                             if (!res.ok) {
                               const errorBody = await res.json().catch(() => null);
                               const message =
-                                errorBody?.error || errorBody?.message || 'Failed to update invoice status';
+                                errorBody?.error ||
+                                errorBody?.message ||
+                                'Failed to update invoice status';
                               alert(message);
                               return;
                             }

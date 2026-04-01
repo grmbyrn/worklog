@@ -26,7 +26,13 @@ export async function GET() {
     orderBy: { createdAt: 'desc' },
   });
 
-  return Response.json({ invoices });
+  const now = new Date();
+  const invoicesWithOverdue = invoices.map((inv) => ({
+    ...inv,
+    isOverdue: !inv.isPaid && !!inv.dueDate && new Date(inv.dueDate) < now,
+  }));
+
+  return Response.json({ invoices: invoicesWithOverdue });
 }
 
 export async function POST(req: Request) {
@@ -37,7 +43,7 @@ export async function POST(req: Request) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { clientId, startDate, endDate, hourlyRate } = await req.json();
+  const { clientId, startDate, endDate, hourlyRate, dueDate } = await req.json();
 
   if (!clientId || !startDate || !endDate) {
     return Response.json({ error: 'Missing required fields' }, { status: 400 });
@@ -105,6 +111,9 @@ export async function POST(req: Request) {
 
     const totalAmount = totalHours * rate;
 
+    // default dueDate to 30 days from now if not provided
+    const due = dueDate ? new Date(dueDate) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
     const invoiceData: Prisma.InvoiceUncheckedCreateInput = {
       totalHours: parseFloat(totalHours.toFixed(2)),
       totalAmount: parseFloat(totalAmount.toFixed(2)),
@@ -113,6 +122,7 @@ export async function POST(req: Request) {
       periodEnd: to,
       clientId,
       userId: user.id,
+      dueDate: due,
     };
 
     const invoice = await prisma.invoice.create({
