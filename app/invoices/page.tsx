@@ -14,6 +14,7 @@ interface Client {
 
 interface Invoice {
   id: string;
+  invoiceNumber?: string | null;
   totalHours: number;
   totalAmount: number;
   createdAt: string;
@@ -42,6 +43,7 @@ interface InvoiceDetailsResponse {
 const buildInvoicePdf = (invoice: Invoice, entries: InvoiceEntry[]) => {
   const doc = new jsPDF();
   const createdAt = new Date(invoice.createdAt).toLocaleDateString();
+  const invoiceNumber = invoice.invoiceNumber || invoice.id;
   const periodStart = invoice.periodStart
     ? new Date(invoice.periodStart).toLocaleDateString()
     : 'N/A';
@@ -49,10 +51,12 @@ const buildInvoicePdf = (invoice: Invoice, entries: InvoiceEntry[]) => {
   const dueDate = invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : 'N/A';
 
   doc.setFontSize(18);
-  doc.text('Worklog Invoice', 14, 20);
+  doc.text('Worklog Invoice', 14, 16);
+  doc.setFontSize(14);
+  doc.text(invoiceNumber, 14, 26);
 
   doc.setFontSize(12);
-  doc.text(`Client: ${invoice.client.name}`, 14, 32);
+  doc.text(`Client: ${invoice.client.name}`, 14, 36);
   doc.text(`Period: ${periodStart} - ${periodEnd}`, 14, 40);
   doc.text(`Due: ${dueDate}`, 14, 48);
   doc.text(`Created: ${createdAt}`, 14, 56);
@@ -164,7 +168,8 @@ export default function InvoicesPage() {
     const details = await fetchInvoiceDetails(invoiceId);
     if (!details) return;
     const doc = buildInvoicePdf(details.invoice, details.entries);
-    doc.save(`invoice-${details.invoice.id}.pdf`);
+    const fileName = `invoice-${details.invoice.invoiceNumber || details.invoice.id}.pdf`;
+    doc.save(fileName);
   };
 
   const handleView = async (invoiceId: string) => {
@@ -310,7 +315,10 @@ export default function InvoicesPage() {
               {invoicesData?.invoices?.length > 0 ? (
                 invoicesData?.invoices?.map((invoice: Invoice) => (
                   <tr key={invoice.id} className="hover:bg-slate-50">
-                    <td className="px-6 py-4 text-slate-900">{invoice.client.name}</td>
+                    <td className="px-6 py-4 text-slate-900">
+                      <div className="font-semibold">{invoice.invoiceNumber || invoice.id}</div>
+                      <div className="text-sm text-slate-600">{invoice.client.name}</div>
+                    </td>
                     <td className="px-6 py-4 text-slate-600">
                       {new Date(invoice.createdAt).toLocaleDateString()}
                     </td>

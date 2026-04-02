@@ -19,6 +19,7 @@ model User {
   clients     Client[]
   timeEntries TimeEntry[]
   invoices    Invoice[]
+  invoiceSequence InvoiceSequence?
 }
 
 model Client {
@@ -52,6 +53,8 @@ model TimeEntry {
 
 model Invoice {
   id          String    @id @default(cuid())
+  // Human-readable invoice number, e.g. INV-001 (scoped per user)
+  invoiceNumber String?
   totalHours  Float
   totalAmount Float
   // Hourly rate used when the invoice was generated (persisted for historical accuracy)
@@ -70,6 +73,18 @@ model Invoice {
   isPaid      Boolean   @default(false)
   // Optional due date for the invoice; if not provided, default applied in server logic
   dueDate     DateTime?
+
+  @@unique([userId, invoiceNumber])
+}
+
+// Tracks the last invoice sequence number for each user so invoice numbers
+// can auto-increment per user in a concurrency-safe manner.
+model InvoiceSequence {
+  id         String @id @default(cuid())
+  userId     String @unique
+  lastNumber Int    @default(0)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 enum InvoiceStatus {
