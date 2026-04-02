@@ -126,9 +126,19 @@ export async function POST(req: Request) {
       status: 'DRAFT',
     };
 
-    const invoice = await prisma.invoice.create({
-      data: invoiceData,
-      include: { client: true },
+    const invoice = await prisma.$transaction(async (tx) => {
+      const seq = await tx.invoiceSequence.upsert({
+        where: { userId: user.id },
+        update: { lastNumber: { increment: 1 } },
+        create: { userId: user.id, lastNumber: 1 },
+      });
+
+      const invoiceNumber = `INV-${String(seq.lastNumber).padStart(3, '0')}`;
+
+      return tx.invoice.create({
+        data: { ...invoiceData, invoiceNumber },
+        include: { client: true },
+      });
     });
 
     return Response.json({ invoice });
