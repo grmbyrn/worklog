@@ -69,6 +69,8 @@ describe('POST /api/timer', () => {
     const res = await POST(req as Request);
     const json = await res.json();
 
-    expect(json.error).toBe('A timer is already running');
+    // With the simplified approach the POST returns the existing running entry
+    expect(json.runningEntry).toBeDefined();
+    expect(json.runningEntry.id).toBe('existing');
   });
 });
