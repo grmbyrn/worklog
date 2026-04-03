@@ -41,13 +41,13 @@ export async function POST(req: Request) {
       return Response.json({ error: 'Client not found' }, { status: 404 });
     }
 
-    // Ensure there is no other running entry for this user
+    // If there is an existing running entry, return it (DB is the source of truth)
     const existingRunning = await prisma.timeEntry.findFirst({
       where: { userId: user.id, status: TimeEntryStatus.RUNNING },
     });
 
     if (existingRunning) {
-      return Response.json({ error: 'A timer is already running' }, { status: 409 });
+      return Response.json({ runningEntry: existingRunning });
     }
 
     // Create time entry with status RUNNING
@@ -87,14 +87,10 @@ export async function GET() {
     });
 
     const runningEntry = await prisma.timeEntry.findFirst({
-      where: {
-        userId: user.id,
-        status: 'RUNNING',
-      },
-      include: {
-        client: true,
-      },
+      where: { userId: user.id, status: TimeEntryStatus.RUNNING },
+      include: { client: true },
     });
+
     return Response.json({ runningEntry });
   } catch (error) {
     console.error('Error fetching in-progress time entries:', error);

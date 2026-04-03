@@ -1,7 +1,7 @@
-'use client';
+ 'use client';
 
-import { useEffect, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMemo, useState, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 interface Client {
   id: string;
@@ -11,10 +11,35 @@ interface Client {
 
 export default function TimerPage() {
   const [selectedClientId, setSelectedClientId] = useState('');
-  const [isRunning, setIsRunning] = useState(false);
-  const [seconds, setSeconds] = useState(0);
-  const [startTime, setStartTime] = useState<Date | null>(null);
-  const [activeEntryId, setActiveEntryId] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+
+  const { data: timerData } = useQuery({
+    queryKey: ['timerRunning'],
+    queryFn: async () => {
+      const res = await fetch('/api/timer');
+      if (!res.ok) throw new Error('Failed to fetch timer');
+      return res.json();
+    },
+    refetchInterval: 1000,
+  });
+
+  const runningEntry = timerData?.runningEntry ?? null;
+  const activeEntryId = runningEntry?.id ?? null;
+  const isRunning = !!runningEntry;
+  const [tick, setTick] = useState(() => Date.now());
+
+  // Update a lightweight tick every second while a timer is running to drive the display.
+  useEffect(() => {
+    if (!isRunning) return;
+    const id = setInterval(() => setTick(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [isRunning]);
+
+  const seconds = useMemo(() => {
+    if (!runningEntry?.startTime) return 0;
+    const diff = Math.floor((tick - new Date(runningEntry.startTime).getTime()) / 1000);
+    return Math.max(0, diff);
+  }, [runningEntry, tick]);
 
   const {
     data: clientsData,
@@ -31,44 +56,13 @@ export default function TimerPage() {
     },
   });
 
-  // On mount, check for any running entry and resume timer UI
+  // Polling via react-query handles fetching running entry every second.
+  // When a running entry exists, ensure selected client matches it.
   useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        const res = await fetch('/api/timer');
-        if (!res.ok) return;
-        const data = await res.json();
-        const entry = data.runningEntry;
-        if (mounted && entry) {
-          setSelectedClientId(entry.clientId);
-          setActiveEntryId(entry.id);
-          const s = new Date(entry.startTime);
-          setStartTime(s);
-          const diff = Math.floor((Date.now() - s.getTime()) / 1000);
-          setSeconds(Math.max(0, diff));
-          setIsRunning(true);
-        }
-      } catch {
-        // ignore
-      }
-    })();
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-
-    if (isRunning) {
-      interval = setInterval(() => {
-        setSeconds((s) => s + 1);
-      }, 1000);
+    if (runningEntry && selectedClientId !== runningEntry.clientId) {
+      setSelectedClientId(runningEntry.clientId);
     }
-
-    return () => clearInterval(interval);
-  }, [isRunning]);
+  }, [runningEntry, selectedClientId]);
 
   const handleStart = async () => {
     if (!selectedClientId) {
@@ -76,58 +70,42 @@ export default function TimerPage() {
       return;
     }
 
-    const now = new Date();
-    setStartTime(now);
-    setIsRunning(true);
-
-    // Create a TimeEntry in the database (without endTime)
-    const response = await fetch('/api/timer', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        clientId: selectedClientId,
-        startTime: now.toISOString(),
-      }),
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      setActiveEntryId(data.timeEntry.id);
-    } else {
+    try {
+      const now = new Date().toISOString();
+      const res = await fetch('/api/timer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clientId: selectedClientId, startTime: now }),
+      });
+      if (!res.ok) throw new Error('Failed to start timer');
+      // invalidate query so the new running entry is fetched on next tick
+      queryClient.invalidateQueries({ queryKey: ['timerRunning'] });
+    } catch {
       alert('Error starting timer');
     }
   };
 
   const handleStop = async () => {
-    if (!startTime || !activeEntryId) return;
+    if (!activeEntryId) return;
 
-    setIsRunning(false);
-
-    // Save to database
-    const endTime = new Date();
-    const response = await fetch(`/api/timer/${activeEntryId}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        endTime: endTime.toISOString(),
-      }),
-    });
-
-    if (response.ok) {
-      // Reset timer
-      setSeconds(0);
-      setStartTime(null);
-      setActiveEntryId(null);
+    try {
+      const endTime = new Date().toISOString();
+      const res = await fetch(`/api/timer/${activeEntryId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ endTime }),
+      });
+      if (!res.ok) throw new Error('Failed to stop');
+      queryClient.invalidateQueries({ queryKey: ['timerRunning'] });
       alert('Time entry saved!');
-    } else {
+    } catch {
       alert('Error saving time entry');
     }
   };
 
   const handleReset = () => {
-    setSeconds(0);
-    setIsRunning(false);
-    setStartTime(null);
+    // No local timer state — to reset UI, stop server entry if present
+    if (activeEntryId) handleStop();
   };
 
   const formatTime = (totalSeconds: number) => {
