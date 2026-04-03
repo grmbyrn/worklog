@@ -77,14 +77,12 @@ export async function GET() {
   }
 
   try {
-    const user = await prisma.user.upsert({
-      where: { email: session.user.email },
-      update: {},
-      create: {
-        email: session.user.email,
-        name: session.user.name || '',
-      },
-    });
+    // Find the user read-only; do not create a user during GET so polling is read-only.
+    const user = await prisma.user.findUnique({ where: { email: session.user.email } });
+
+    if (!user) {
+      return Response.json({ runningEntry: null });
+    }
 
     const runningEntry = await prisma.timeEntry.findFirst({
       where: { userId: user.id, status: TimeEntryStatus.RUNNING },

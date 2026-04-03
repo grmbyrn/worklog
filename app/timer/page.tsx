@@ -20,7 +20,10 @@ export default function TimerPage() {
       if (!res.ok) throw new Error('Failed to fetch timer');
       return res.json();
     },
-    refetchInterval: 1000,
+    refetchInterval: (d: unknown) => {
+      const dd = d as Record<string, unknown> | null;
+      return dd && dd['runningEntry'] ? 1000 : false;
+    },
   });
 
   const runningEntry = timerData?.runningEntry ?? null;
@@ -104,8 +107,16 @@ export default function TimerPage() {
   };
 
   const handleReset = () => {
-    // No local timer state — to reset UI, stop server entry if present
-    if (activeEntryId) handleStop();
+    // If there's an active server entry, stop it.
+    if (activeEntryId) {
+      handleStop();
+      return;
+    }
+
+    // Otherwise clear client selection and refresh timer query so UI shows 00:00:00
+    setSelectedClientId('');
+    setTick(Date.now());
+    queryClient.invalidateQueries({ queryKey: ['timerRunning'] });
   };
 
   const formatTime = (totalSeconds: number) => {
