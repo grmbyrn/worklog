@@ -17,7 +17,7 @@ beforeAll(async () => {
   POST = mod.POST;
 });
 
-const { prisma: mockPrisma } = jest.requireMock('../../app/lib/prisma') as {
+const { prisma: mockPrisma } = jest.requireMock('@/lib/prisma') as {
   prisma: {
     user: { upsert: jest.Mock };
     client: { findFirst: jest.Mock };

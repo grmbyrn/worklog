@@ -46,7 +46,7 @@ export default function TimerPage() {
           const s = new Date(entry.startTime);
           setStartTime(s);
           const diff = Math.floor((Date.now() - s.getTime()) / 1000);
-          setSeconds(diff);
+          setSeconds(Math.max(0, diff));
           setIsRunning(true);
         }
       } catch {

@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import TimerPage from '../app/timer/page';
 
@@ -29,9 +29,8 @@ describe('TimerPage resume behavior', () => {
     );
 
     // Wait for the timer display to show a non-zero time
-    await waitFor(() => {
-      expect(screen.getByText(/:/)).toBeInTheDocument();
-    });
+    const timerDisplay = await screen.findByText(/\d{2}:\d{2}:\d{2}/);
+    expect(timerDisplay.textContent).not.toBe('00:00:00');
 
     // Ensure Stop button is present (implies running)
     expect(await screen.findByText(/stop/i)).toBeInTheDocument();

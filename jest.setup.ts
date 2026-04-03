@@ -39,11 +39,30 @@ process.env.NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET || 'test-secret';
 process.env.NEXTAUTH_URL = process.env.NEXTAUTH_URL || 'http://localhost:3000';
 
 // Minimal Response.json helper used by Next.js app route handlers in tests
-(global as unknown as { Response?: unknown }).Response = {
-	json(body: unknown, init?: { status?: number }) {
-		return {
-			json: async () => body,
-			status: init?.status,
-		};
-	},
-};
+// Provide a minimal Response-like object used by app route handlers in tests
+class TestResponse {
+	body: unknown;
+	status?: number;
+	ok: boolean;
+	constructor(body: unknown, init?: { status?: number }) {
+		this.body = body;
+		this.status = init?.status;
+		this.ok = this.status === undefined ? true : this.status >= 200 && this.status < 300;
+	}
+	async json() {
+		return this.body;
+	}
+}
+
+if ((global as unknown as { Response?: unknown }).Response === undefined) {
+	(global as unknown as { Response?: unknown }).Response = {
+		json(body: unknown, init?: { status?: number }) {
+			return new TestResponse(body, init);
+		},
+	};
+}
+
+// Only assign TestRequest if a global Request is not already present
+if ((global as unknown as { Request?: unknown }).Request === undefined) {
+	(global as unknown as { Request?: unknown }).Request = TestRequest;
+}
