@@ -42,6 +42,7 @@ model TimeEntry {
   id        String    @id @default(cuid())
   startTime DateTime
   endTime   DateTime?
+  status    TimeEntryStatus @default(RUNNING)
   createdAt DateTime  @default(now())
   
   clientId  String
@@ -49,6 +50,11 @@ model TimeEntry {
   
   userId    String
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum TimeEntryStatus {
+  RUNNING
+  COMPLETED
 }
 
 model Invoice {

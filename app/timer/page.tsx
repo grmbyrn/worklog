@@ -31,6 +31,33 @@ export default function TimerPage() {
     },
   });
 
+  // On mount, check for any running entry and resume timer UI
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await fetch('/api/timer');
+        if (!res.ok) return;
+        const data = await res.json();
+        const entry = data.runningEntry;
+        if (mounted && entry) {
+          setSelectedClientId(entry.clientId);
+          setActiveEntryId(entry.id);
+          const s = new Date(entry.startTime);
+          setStartTime(s);
+          const diff = Math.floor((Date.now() - s.getTime()) / 1000);
+          setSeconds(diff);
+          setIsRunning(true);
+        }
+      } catch {
+        // ignore
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   useEffect(() => {
     let interval: NodeJS.Timeout;
 

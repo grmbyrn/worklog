@@ -1,6 +1,7 @@
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/auth';
 import { prisma } from '@/lib/prisma';
+import { TimeEntryStatus } from '@prisma/client';
 import { validateEnv } from '@/lib/env';
 
 export async function POST(req: Request) {
@@ -40,13 +41,23 @@ export async function POST(req: Request) {
       return Response.json({ error: 'Client not found' }, { status: 404 });
     }
 
-    // Create time entry
+    // Ensure there is no other running entry for this user
+    const existingRunning = await prisma.timeEntry.findFirst({
+      where: { userId: user.id, status: TimeEntryStatus.RUNNING },
+    });
+
+    if (existingRunning) {
+      return Response.json({ error: 'A timer is already running' }, { status: 409 });
+    }
+
+    // Create time entry with status RUNNING
     const timeEntry = await prisma.timeEntry.create({
       data: {
         startTime: new Date(startTime),
         endTime: endTime ? new Date(endTime) : null,
         clientId,
         userId: user.id,
+        status: TimeEntryStatus.RUNNING,
       },
     });
 
@@ -75,16 +86,16 @@ export async function GET() {
       },
     });
 
-    const inProgressEntries = await prisma.timeEntry.findMany({
+    const runningEntry = await prisma.timeEntry.findFirst({
       where: {
         userId: user.id,
-        endTime: null,
+        status: 'RUNNING',
       },
       include: {
         client: true,
       },
     });
-    return Response.json({ inProgressEntries });
+    return Response.json({ runningEntry });
   } catch (error) {
     console.error('Error fetching in-progress time entries:', error);
     return Response.json({ error: 'Internal server error' }, { status: 500 });
