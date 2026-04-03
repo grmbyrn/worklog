@@ -19,15 +19,11 @@ class TestRequest {
 		this._body = init?.body;
 	}
 	async json() {
-		if (!this._body) return null;
-		try {
-			return JSON.parse(this._body);
-		} catch {
-			return this._body as unknown as object;
-		}
+		if (this._body === undefined) return null;
+		return JSON.parse(this._body);
 	}
 	text() {
-		return Promise.resolve(this._body);
+		return Promise.resolve(this._body ?? '');
 	}
 }
 
