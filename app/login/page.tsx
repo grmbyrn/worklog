@@ -10,7 +10,7 @@ export default function LoginPage() {
         <p className="text-center text-slate-600 mb-8">Track your billable hours</p>
 
         <button
-          onClick={() => signIn('github', { redirectTo: '/dashboard' })}
+          onClick={() => signIn('github', { callbackUrl: '/dashboard' })}
           className="w-full py-3 px-4 bg-slate-900 text-white font-semibold rounded-lg hover:bg-slate-800 transition-colors flex items-center justify-center gap-2"
         >
           <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
